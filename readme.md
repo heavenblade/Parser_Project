@@ -21,8 +21,6 @@ LALR(1)-parser
 In order to correctly use the software you have to write the grammar you want to parse in the 'grammar.txt' file, following the format underneath.
 If the right hand side of a production contains epsilon, write the character '#' instead of epsilon, the software reads it as it's epsilon.  
 
-<driver>-><right_hand_side>  
-
 Example:  
 S->AB  
 A->a  
