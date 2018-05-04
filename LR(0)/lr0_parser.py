@@ -29,10 +29,40 @@ class nonTerminal:
     def add_follow (self, element):
         self.follow_l.append(element)
 
+class lr0State:
+    name = 0
+    item_list = []
+    isInitialState = False
+    def __init__ (self, state_count):
+        self.name = state_count
+        self.item_list = []
+        self.isInitialState = False
+
+    def add_item (self, item):
+        self.item_list.append(item)
+
+    # wip: funzione che muove il dot all'interno delle production
+    # def move_dot (self, item):
+
+class transition:
+    name = 0
+    element = ''
+    starting_state = 0
+    ending_state = 0
+    def __init__ (self, transition_count, elem, s_state, e_state):
+        self.name = transition_count
+        self.element = elem
+        self.starting_state = s_state
+        self.ending_state = e_state
+
 # variables declaration section
-terminal_names = []
+terminal_names = []                                     # strings of terminals
 non_terminal_names = []                                 # just strings
 non_terminals = []                                      # actual non-terminals
+lr0_states = []                                         # array of lr0-states
+transitions = []                                        # array of transitions between lr0-states
+state_counter = 0
+transition_counter = 0
 
 # input section
 with open("grammar.txt", 'r') as f:
@@ -89,8 +119,22 @@ for element in non_terminals:
     print("Follow(" + element.name + "):")
     print(element.follow_l)
 
-# table Computation
+# creation of augmented grammar
+a_grammar = []
+prev_starting_symb = ''
+for element in non_terminals:
+    if element.isStartSymbol:
+        prev_starting_symb = element.name
+starting_prod = "Q->" + prev_starting_symb
+a_grammar.append(starting_prod)
+for prod in grammar:
+    a_grammar.append(prod[0])
 
+print("\nAugmented grammar:")
+for production in a_grammar:
+    print(production)
+
+# table Computation
 header = []
 for element in terminal_names:
     if element not in header:
