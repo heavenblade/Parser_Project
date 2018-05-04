@@ -1,4 +1,4 @@
-# This is an LR(0) parser for grammars. It may not be optimized but it's
+# This is a LR(0) parser for grammars. It may not be optimized but it's
 # a project i'm conducting in the free time during my university studies.
 #
 # Check readme.txt in order to see input format of the grammar and eventual
@@ -61,9 +61,35 @@ for production in grammar:
                     terminal_names.append(production[0][index])
 terminal_names.append("$")
 
+non_terminals[0].isStartSymbol = True
+
 print("Grammar:")
 for element in grammar:
     print(element[0])
+
+# first computation
+print("------------------------- First Computation --------------------------")
+for i in range(0, 2):
+    for element in reversed(non_terminals):
+        for row in grammar:
+            ffc.compute_first(element, row, non_terminals, 3)
+
+for element in non_terminals:
+    print("First(" + element.name + "):")
+    print(element.first_l)
+
+# follow computation
+print("------------------------- Follow Computation -------------------------")
+for i in range(0, 1):
+    for element in non_terminals:
+        for row in grammar:
+            ffc.compute_follow(element, row, non_terminals, 3)
+
+for element in non_terminals:
+    print("Follow(" + element.name + "):")
+    print(element.follow_l)
+
+# table Computation
 
 header = []
 for element in terminal_names:
@@ -75,7 +101,7 @@ for element in non_terminal_names:
 
 ll1_table = PrettyTable(header)
 total_lenght = len(non_terminal_names) + len(terminal_names)
-table = [["" for x in range(total_lenght)] for y in range(10)]
+table = [["" for x in range(total_lenght)] for y in range(10)] # 10 -> numero di stati, quindi dovrò fare la computazione dell'automa prima
 
 for idx_row in range(10):
     for idx_col in range(total_lenght):

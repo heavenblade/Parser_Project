@@ -1,5 +1,6 @@
-S->aA
+S->aAB
 S->bBc
 A->Bd
+A->#
 B->c
 B->#

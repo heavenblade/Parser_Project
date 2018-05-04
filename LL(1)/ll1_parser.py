@@ -1,4 +1,4 @@
-# This is an LL(1) parser for grammars. It may not be optimized but it's
+# This is a LL(1) parser for grammars. It may not be optimized but it's
 # a project i'm conducting in the free time during my university studies.
 #
 # Check readme.txt in order to see input format of the grammar and eventual
