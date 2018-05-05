@@ -29,26 +29,39 @@ class nonTerminal:
     def add_follow (self, element):
         self.follow_l.append(element)
 
+class lr0Item:
+    production = []
+    type = ""
+    dot = 0
+
+    def __init__ (self, production, type):
+        self.production = production
+        self.type = type
+        self.dot = 3
+
+def create_new_item (production, type):
+    new_state = lr0Item(production, type)
+    return new_state
+
 class lr0State:
     name = 0
-    kernel_item_l = []
-    closure_item_l = []
+    item_l = []
     isInitialState = False
 
     def __init__ (self, state_count):
         self.name = state_count
-        self.kernel_item_l = []
-        self.closure_item_l = []
+        self.item_l = []
         self.isInitialState = False
 
-    def add_kernel_item (self, item):
-        self.kernel_item_l.append(item)
-
-    def add_closure_item (self, item):
-        self.closure_item_l.append(item)
+    def add_item (self, item):
+        self.item_l.append(item)
 
     # wip: funzione che muove il dot all'interno delle production
     # def move_dot (self, item):
+
+def create_new_state (name):
+    new_state = lr0State(name)
+    return new_state
 
 class transition:
     name = 0
@@ -61,6 +74,10 @@ class transition:
         self.element = elem
         self.starting_state = s_state
         self.ending_state = e_state
+
+def create_new_transition (name, element, s_state, e_state):
+    new_transition = lr0State(name, element, s_state, e_state)
+    return new_transition
 
 # variables declaration section
 terminal_names = []                                     # strings of terminals
@@ -88,7 +105,7 @@ for index in range(len(grammar)):
         non_terminal_names.append(driver)
         non_terminals.append(nonTerminal(driver))
 
-#collecting terminals
+# collecting terminals
 terminal_names.append(" ")
 for production in grammar:
     for index in range(len(production[0])):
@@ -140,6 +157,24 @@ for prod in grammar:
 print("\nAugmented grammar:")
 for production in a_grammar:
     print(production)
+
+# computation of the LR(0) automa
+initial_state = create_new_state(state_counter)
+state_counter += 1
+initial_state.isInitialState = True
+item = create_new_item(a_grammar[0], "Kernel")
+initial_state.item_l.append(item)
+for kernel_i in initial_state.item_l:
+    for production in grammar:
+        if kernel_i.production[kernel_i.dot] == production[0][0]:
+            item = create_new_item(production[0], "Closure")
+            if item not in initial_state.item_l:
+                initial_state.item_l.append(item)
+lr0_states.append(initial_state)
+
+print("\nLR(0)-items in state " + str(initial_state.name) + ":")
+for element in initial_state.item_l:
+    print(element.production, str(element.dot), element.type)
 
 # table Computation
 header = []
