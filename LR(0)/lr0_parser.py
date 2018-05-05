@@ -31,15 +31,21 @@ class nonTerminal:
 
 class lr0State:
     name = 0
-    item_list = []
+    kernel_item_l = []
+    closure_item_l = []
     isInitialState = False
+
     def __init__ (self, state_count):
         self.name = state_count
-        self.item_list = []
+        self.kernel_item_l = []
+        self.closure_item_l = []
         self.isInitialState = False
 
-    def add_item (self, item):
-        self.item_list.append(item)
+    def add_kernel_item (self, item):
+        self.kernel_item_l.append(item)
+
+    def add_closure_item (self, item):
+        self.closure_item_l.append(item)
 
     # wip: funzione che muove il dot all'interno delle production
     # def move_dot (self, item):
@@ -49,6 +55,7 @@ class transition:
     element = ''
     starting_state = 0
     ending_state = 0
+
     def __init__ (self, transition_count, elem, s_state, e_state):
         self.name = transition_count
         self.element = elem
