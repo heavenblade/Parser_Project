@@ -33,11 +33,13 @@ class lr0Item:
     production = []
     type = ""
     dot = 0
+    isReductionItem = False
 
     def __init__ (self, production, type):
         self.production = production
         self.type = type
         self.dot = 3
+        self.isReductionItem = False
 
 def create_new_item (production, type):
     new_state = lr0Item(production, type)
@@ -172,7 +174,18 @@ for kernel_i in initial_state.item_l:
                 initial_state.item_l.append(item)
 lr0_states.append(initial_state)
 
-print("\nLR(0)-items in state " + str(initial_state.name) + ":")
+# ciclo for che per ogni simbolo dietro al dot crea transizioni verso nuovo stato
+new_symb_transitions = []
+for state in lr0_states:
+    for item in state.item_l:
+        if item.production[item.dot] not in new_symb_transitions:
+            new_symb_transitions.append(item.production[item.dot])
+        for element in new_symb_transitions:
+            for item in state.item_l:
+                if 
+
+
+print("\nState " + str(initial_state.name) + ":")
 for element in initial_state.item_l:
     print(element.production, str(element.dot), element.type)
 

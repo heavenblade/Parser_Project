@@ -1,4 +1,4 @@
-# Parsers in Python Project - by Amatori Matteo
+# Parsers in Python Project
 
 Hello world!
 My name is Amatori Matteo and this project was born after I successfully passed my exam of Formal Languages and Compilers in January 2018.
@@ -48,3 +48,4 @@ LALR(1)-parser:
 ```
 > python3 lalr1_parser.py
 ```
+To be mentioned: if you added python to PATH, then just omit the '3' at the end of "python3".
