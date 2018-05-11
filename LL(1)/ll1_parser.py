@@ -6,35 +6,6 @@
 #
 # Author: Matteo Amatori
 
-'''
-S->aA
-S->bBc
-A->Bd
-A->Cc
-B->C
-B->#
-C->S
-C->#
-
-first_l:
-S = {a, b}
-A = {a, b, c, d}
-B = {#, a, b}
-C = {#, a, b}
-follow_l:
-S = {$, c, d}
-A = {$, c, d}
-B = {c, d}
-C = {c, d}
-
-follow rules:
-1. S->C: follow(S) vanno nei follow(C)
-2. B->CSr: 'r' va nei follow(S)
-3. S->BCg: first(C)-{eps} vanno nei follow(B). se first(C) contengono eps allora anche 'g' va nei follow(B)
-4. S->BC con first(C) contenente eps: allora follow(S) vanno nei follow(B) oltre che nei follow(C)
-
-'''
-
 import csv
 import numpy
 import first_and_follow_calculation as ffc

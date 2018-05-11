@@ -34,13 +34,22 @@ class lr0Item:
     production = []
     type = ""
     dot = 0
-    isReductionItem = False
+    isReduceItem = False
 
     def __init__ (self, production, type, dot, reduct):
         self.production = production
         self.type = type
         self.dot = dot
-        self.isReductionItem = reduct
+        self.isReduceItem = reduct
+
+    def __eq__ (self, other):
+        if (self.production == other.production and self.type == other.type and self.dot == other.dot and self.isReduceItem == other.isReduceItem):
+            return True
+        else:
+            return False
+
+    def __hash__(self):
+        return hash((self.production, self.type, self.dot, self.isReduceItem))
 
 def create_new_item (production, type, dot, reduct):
     new_state = lr0Item(production, type, dot, reduct)
@@ -53,7 +62,7 @@ def verify_if_reduction(item, dot):
         return False
 
 def print_item(item):
-    print(item.production, item.type, item.dot, item.isReductionItem)
+    print(item.production, item.type, item.dot, item.isReduceItem)
 #------------------------------------------------------------------------------
 class lr0State:
     name = 0
@@ -77,23 +86,13 @@ def check_kernel_equality(new_kernel, state_n):
     for item in state_n.item_l:
         if (item.type == "Kernel"):
             state_n_ker.append(item)
-    if (len(new_kernel) == len(state_n_ker)):
-        check = len(new_kernel)
-    else:
-        check = sys.maxsize/2
-    for idx, k_item in enumerate(new_kernel):
-        if (k_item.production == state_n_ker[idx].production and # idx esce dal bound perché finisce prima dell'altra item_l
-            k_item.type == state_n_ker[idx].type and
-            k_item.dot == state_n_ker[idx].dot and
-            k_item.isReductionItem == state_n_ker[idx].isReductionItem):
-            check -= 1
-    if (check == 0):
+    if (set(new_kernel) == set(state_n_ker)):
         return True
     else:
         return False
 
 def apply_closure(state, my_item):
-    if (my_item.isReductionItem == "Not-reduction"):
+    if (my_item.isReduceItem == "Not-reduction"):
         if (ffc.isNonTerminal(my_item.production[my_item.dot])):
             for production in grammar:
                 if (production[0][0] == my_item.production[my_item.dot]):
@@ -103,6 +102,8 @@ def apply_closure(state, my_item):
                         new_item = create_new_item(production[0], "Closure", 3, "Reduction" if (3 == len(production[0])) else "Not-reduction")
                     if (new_item not in state.item_l):
                         state.add_item(new_item)
+                    if (ffc.isNonTerminal(new_item.production[new_item.dot])):
+                        apply_closure(state, new_item)
 #------------------------------------------------------------------------------
 class transition:
     name = 0
@@ -136,7 +137,6 @@ with open("grammar.txt", 'r') as f:
     for row in input_file:
         if (len(row) != 0):
             grammar = grammar + [row]
-
 f.close()
 
 # collecting non-terminals
@@ -195,12 +195,8 @@ a_grammar.append(starting_prod)
 for prod in grammar:
     a_grammar.append(prod[0])
 
-print("\nAugmented grammar:")
-for production in a_grammar:
-    print(production)
-
 # computation of the LR(0) automa
-
+print("---------------------- LR(0)-automa Computation ----------------------")
 # starting state
 initial_state = create_new_state(state_counter)
 state_counter += 1
@@ -217,7 +213,7 @@ for state in lr0_states:
             apply_closure(state, clos_item)
     new_symb_transitions = []
     for item in state.item_l:
-        if (item.isReductionItem == "Not-reduction"):
+        if (item.isReduceItem == "Not-reduction"):
             if (item.production[item.dot] not in new_symb_transitions):
                 new_symb_transitions.append(item.production[item.dot])
     for element in new_symb_transitions:
@@ -228,19 +224,19 @@ for state in lr0_states:
             if (item.production[item.dot] == element):
                 new_item = create_new_item(item.production, "Kernel", item.dot+1, "Reduction" if (item.dot+1 == len(item.production)) else "Not-reduction")
                 new_state_items.append(new_item)
-                for state_n in lr0_states:
-                    if (check_kernel_equality(new_state_items, state_n)):
-                        require_new_state = False
-                    else:
-                        require_new_state = True
-                if (not require_new_state):
-                    destination_state = state_n.name
+        for state_n in lr0_states:
+            if (check_kernel_equality(new_state_items, state_n)):
+                require_new_state = False
+                destination_state = state_n.name
+            else:
+                require_new_state = True
         if (require_new_state):
             new_state = create_new_state(state_counter)
             state_counter += 1
             lr0_states.append(new_state)
             for new_state_item in new_state_items:
-                new_state.add_item(new_state_item)
+                if (new_state_item not in new_state.item_l):
+                    new_state.add_item(new_state_item)
                 apply_closure(new_state, new_state_item)
             new_transition = create_new_transition(transition_counter, element, state.name, new_state.name)
             if (new_transition not in transitions):
@@ -255,7 +251,7 @@ for state in lr0_states:
 for state in lr0_states:
     print("\nState " + str(state.name) + ":")
     for element in state.item_l:
-        print(element.production, ",", element.type, ", Dot is on " + str(element.dot), ", Reduction" if element.isReductionItem else ", Not-reduction")
+        print(element.production, ",", element.type, ", Dot is on " + str(element.dot), ", " + element.isReduceItem)
 for transition in transitions:
     print("\nTransition " + str(transition.name) + ":")
     print(transition.name,  transition.element, transition.starting_state, transition.ending_state)
@@ -271,16 +267,43 @@ for element in non_terminal_names:
 
 lr0_table = PrettyTable(header)
 total_lenght = len(non_terminal_names) + len(terminal_names)
-table = [["" for x in range(total_lenght)] for y in range(10)] # 10 -> numero di stati
+table = [["" for x in range(total_lenght)] for y in range(state_counter)]
 
-for idx_row in range(10):
+# per popolare la tabella semplicemente guardare le transizioni: if non_T then goto else shift. Per le reduce guardo isReductionItem
+# lr0-parsing table computation
+for idx_row in range(state_counter):
     for idx_col in range(total_lenght):
         if (idx_col == 0):
             table[idx_row][idx_col] = idx_row
         else:
             table[idx_row][idx_col] = []
 
-for i in range(10):
+for idx, element in enumerate(header):
+    if (element == "$"):
+        table[0][idx].append("Accept")
+for transition in transitions:
+    if (ffc.isNonTerminal(transition.element)):
+        new_entry = "Goto " + str(transition.ending_state)
+        for idx, element in enumerate(header):
+            if (element == transition.element):
+                table[transition.starting_state][idx].append(new_entry)
+    elif (ffc.isTerminal(transition.element)):
+        new_entry = "S" + str(transition.ending_state)
+        for idx, element in enumerate(header):
+            if (element == transition.element):
+                table[transition.starting_state][idx].append(new_entry)
+
+for state in lr0_states:
+    for item in state.item_l:
+        if (item.isReduceItem == "Reduction"):
+            for idx1, production in enumerate(grammar):
+                if (item.production == production[0]):
+                    new_entry = "R" + str(idx1)
+            for idx2, element in enumerate(header):
+                if (ffc.isTerminal(element) or element == "$"):
+                    table[state.name][idx2].append(new_entry)
+
+for i in range(state_counter):
     lr0_table.add_row(table[i])
 
 print("\nLR(0) parsing table of the grammar G:")
