@@ -44,12 +44,6 @@ class lr0Item:
 def create_new_item (production, type, dot, reduct):
     new_state = lr0Item(production, type, dot, reduct)
     return new_state
-#------------------------------------------------------------------------------
-def check_item_equality(item_1, item_2):
-    if (item_1.production == item_2.production and item_1.type == item_2.type and item_1.dot == item_2.dot and item_1.isReductionItem == item_2.isReductionItem):
-        return True
-    else:
-        return False
 
 def verify_if_reduction(item, dot):
     if (dot == len(item.production)):
@@ -77,16 +71,37 @@ def create_new_state (name):
     new_state = lr0State(name)
     return new_state
 
-def apply_closure(state, symbol):
-    if (ffc.isNonTerminal(symbol)):
-        for production in grammar:
-            if (production[0][0] == symbol):
-                if (production[0][3] == "#"):
-                    new_item = create_new_item(production[0], "Closure", 3, "Reduction")
-                else:
-                    new_item = create_new_item(production[0], "Closure", 3, "Reduction" if (3 == len(production[0])) else "Not-reduction")
-                if (new_item not in state.item_l):
-                    state.add_item(new_item)
+def check_kernel_equality(new_kernel, state_n):
+    state_n_ker = []
+    for item in state_n.item_l:
+        if (item.type == "Kernel"):
+            state_n_ker.append(item)
+    if (len(new_kernel) == len(state_n_ker)):
+        check = len(new_kernel)
+    else:
+        check = sys.maxint/2
+    for idx, k_item in enumerate(new_kernel):
+        if (k_item.production == state_n_ker[idx].production and
+            k_item.type == state_n_ker[idx].type and
+            k_item.dot == state_n_ker[idx].dot and
+            k_item.isReductionItem == state_n_ker[idx].isReductionItem):
+            check -= 1
+    if (check == 0):
+        return True
+    else:
+        return False
+
+def apply_closure(state, my_item):
+    if (my_item.isReductionItem == "Not-reduction"):
+        if (ffc.isNonTerminal(my_item.production[my_item.dot])):
+            for production in grammar:
+                if (production[0][0] == my_item.production[my_item.dot]):
+                    if (production[0][3] == "#"):
+                        new_item = create_new_item(production[0], "Closure", 3, "Reduction")
+                    else:
+                        new_item = create_new_item(production[0], "Closure", 3, "Reduction" if (3 == len(production[0])) else "Not-reduction")
+                    if (new_item not in state.item_l):
+                        state.add_item(new_item)
 #------------------------------------------------------------------------------
 class transition:
     name = 0
@@ -191,43 +206,38 @@ state_counter += 1
 initial_state.isInitialState = True
 s_item = create_new_item(a_grammar[0], "Kernel", 3, "Not-reduction")
 initial_state.item_l.append(s_item)
-apply_closure(initial_state, s_item.production[3])
+apply_closure(initial_state, s_item)
 lr0_states.append(initial_state)
 
-# ciclo for che per ogni simbolo dietro al dot crea transizioni verso nuovo stato
+# rest of automa computation
 for state in lr0_states:
-    new_symb_transitions = [] # array che contiene i simboli con cui devo muovermi
+    new_symb_transitions = []
     for item in state.item_l:
         if (item.isReductionItem == "Not-reduction"):
-            if item.production[item.dot] not in new_symb_transitions:
+            if (item.production[item.dot] not in new_symb_transitions):
                 new_symb_transitions.append(item.production[item.dot])
     for element in new_symb_transitions:
-        require_new_state = True
+        require_new_state = False
         destination_state = 0
         new_state_items = []
         for item in state.item_l:
             if (item.production[item.dot] == element):
-                print("creating new item " + item.production + " " + str(item.dot+1) + "..")
                 new_item = create_new_item(item.production, "Kernel", item.dot+1, "Reduction" if (item.dot+1 == len(item.production)) else "Not-reduction")
                 new_state_items.append(new_item)
-                for state_n in lr0_states: #controllo che non esista un altro stato con lo stesso kernel con require_new_state
-                    for item_n in state_n.item_l:
-                        if (item_n.type == "Kernel"):
-                            if (check_item_equality(item, item_n)):
-                                require_new_state = False
-                            else:
-                                require_new_state = True
-                    if (not require_new_state):
-                        destination_state = state_n.name
+                for state_n in lr0_states:
+                    if (check_kernel_equality(new_state_items, state_n)):
+                        require_new_state = False
+                    else:
+                        require_new_state = True
+                if (not require_new_state):
+                    destination_state = state_n.name
         if (require_new_state):
             new_state = create_new_state(state_counter)
             state_counter += 1
             lr0_states.append(new_state)
             for new_state_item in new_state_items:
                 new_state.add_item(new_state_item)
-                print_item(new_state_item)
-                print("added to state " + str(new_state.name))
-                apply_closure(new_state, new_state_item.production[new_state_item.dot])
+                apply_closure(new_state, new_state_item)
             new_transition = create_new_transition(transition_counter, element, state.name, new_state.name)
             transitions.append(new_transition)
             transition_counter += 1
