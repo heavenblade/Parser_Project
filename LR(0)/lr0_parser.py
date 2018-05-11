@@ -8,6 +8,7 @@
 
 import csv
 import numpy
+import sys
 import first_and_follow_calculation as ffc
 from prettytable import PrettyTable
 #------------------------------------------------------------------------------
@@ -79,9 +80,9 @@ def check_kernel_equality(new_kernel, state_n):
     if (len(new_kernel) == len(state_n_ker)):
         check = len(new_kernel)
     else:
-        check = sys.maxint/2
+        check = sys.maxsize/2
     for idx, k_item in enumerate(new_kernel):
-        if (k_item.production == state_n_ker[idx].production and
+        if (k_item.production == state_n_ker[idx].production and # idx esce dal bound perché finisce prima dell'altra item_l
             k_item.type == state_n_ker[idx].type and
             k_item.dot == state_n_ker[idx].dot and
             k_item.isReductionItem == state_n_ker[idx].isReductionItem):
@@ -211,6 +212,9 @@ lr0_states.append(initial_state)
 
 # rest of automa computation
 for state in lr0_states:
+    for i in range(3):
+        for clos_item in state.item_l:
+            apply_closure(state, clos_item)
     new_symb_transitions = []
     for item in state.item_l:
         if (item.isReductionItem == "Not-reduction"):
@@ -239,12 +243,14 @@ for state in lr0_states:
                 new_state.add_item(new_state_item)
                 apply_closure(new_state, new_state_item)
             new_transition = create_new_transition(transition_counter, element, state.name, new_state.name)
-            transitions.append(new_transition)
-            transition_counter += 1
+            if (new_transition not in transitions):
+                transitions.append(new_transition)
+                transition_counter += 1
         else:
             new_transition = create_new_transition(transition_counter, element, state.name, destination_state)
-            transitions.append(new_transition)
-            transition_counter += 1
+            if (new_transition not in transitions):
+                transitions.append(new_transition)
+                transition_counter += 1
 
 for state in lr0_states:
     print("\nState " + str(state.name) + ":")
