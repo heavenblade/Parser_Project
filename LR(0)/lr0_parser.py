@@ -202,7 +202,7 @@ lr0_states.append(initial_state)
 
 # rest of automa computation
 for state in lr0_states:
-    for i in range(3):
+    for i in range(3): # temporary solution to recursive closure applications
         for clos_item in state.item_l:
             apply_closure(state, clos_item)
     new_symb_transitions = []
@@ -233,14 +233,14 @@ for state in lr0_states:
                     new_state.add_item(new_state_item)
                 apply_closure(new_state, new_state_item)
             new_transition = create_new_transition(transition_counter, element, state.name, new_state.name)
+            transition_counter += 1
             if (new_transition not in transitions):
                 transitions.append(new_transition)
-                transition_counter += 1
         else:
             new_transition = create_new_transition(transition_counter, element, state.name, destination_state)
+            transition_counter += 1
             if (new_transition not in transitions):
                 transitions.append(new_transition)
-                transition_counter += 1
 
 for state in lr0_states:
     print("\nState " + str(state.name) + ":")
