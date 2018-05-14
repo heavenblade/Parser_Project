@@ -93,11 +93,11 @@ def apply_closure(state, my_item):
                     if (production[0][3] == "#"):
                         new_item = create_new_item(production[0], "Closure", 3, "Reduce")
                     else:
-                        new_item = create_new_item(production[0], "Closure", 3, "Reduce" if (3 == len(production[0])) else "Not-Reduce")
+                        new_item = create_new_item(production[0], "Closure", 3, "Not-Reduce")
                     if (new_item not in state.item_l):
                         state.add_item(new_item)
-                    if (ffc.isNonTerminal(new_item.production[new_item.dot])):
-                        apply_closure(state, new_item)
+                        if (ffc.isNonTerminal(new_item.production[new_item.dot])):
+                            apply_closure(state, new_item)
 #------------------------------------------------------------------------------
 class transition:
     name = 0
@@ -210,6 +210,7 @@ for state in lr0_states:
         if (item.isReduceItem == "Not-Reduce"):
             if (item.production[item.dot] not in new_symb_transitions):
                 new_symb_transitions.append(item.production[item.dot])
+
     for element in new_symb_transitions:
         require_new_state = False
         destination_state = 0
@@ -219,11 +220,12 @@ for state in lr0_states:
                 new_item = create_new_item(item.production, "Kernel", item.dot+1, "Reduce" if (item.dot+1 == len(item.production)) else "Not-Reduce")
                 new_state_items.append(new_item)
         for state_n in lr0_states:
-            if (check_kernel_equality(new_state_items, state_n)):
-                require_new_state = False
-                destination_state = state_n.name
-            else:
-                require_new_state = True
+                if (check_kernel_equality(new_state_items, state_n)):
+                    require_new_state = False
+                    destination_state = state_n.name
+                    break
+                else:
+                    require_new_state = True
         if (require_new_state):
             new_state = create_new_state(state_counter)
             state_counter += 1
