@@ -98,8 +98,8 @@ def check_kernel_equality(new_kernel, state_n):
         return True
     else:
         return False
-
-def apply_closure(state, my_item): # to be changed
+                                        #    S->a.ABC, $  dove B->b,# C->c,#  closure di A prende b,c,$ come LA
+def apply_closure(state, my_item):
     if (my_item.isReduceItem == "Not-Reduce"):
         if (ffc.isNonTerminal(my_item.production[my_item.dot])):
             for production in grammar:
@@ -109,8 +109,19 @@ def apply_closure(state, my_item): # to be changed
                         for element in my_item.lookAhead:
                             temp_lookAhead_l.append(element)
                     else:
-                        if (ffc.isTerminal(my_item.production[my_item.dot+1])):
-                            temp_lookAhead_l.append(my_item.production[my_item.dot+1])
+                        p_prog = my_item.dot
+                        while (p_prog+1 < len(my_item.production)-1):
+                            if (ffc.isTerminal(my_item.production[my_item.dot+1])):
+                                temp_lookAhead_l.append(my_item.production[my_item.dot+1])
+                            else:
+                                for nT in non_terminals:
+                                    if (nT.name == my_item.production[p_prog+1]):
+                                        for first_nT in nT.first_l:
+                                            if (first_nT != "#"):
+                                                temp_lookAhead_l.append(first_nT)
+                                            else:
+                                                # se trovo che first(B) contiene eps, devo guardare C
+                            p_prog += 1
 
                     if (production[0][3] == "#"):
                         new_item = create_new_item(production[0], temp_lookAhead_l, 3, "Closure", "Reduce")
@@ -217,7 +228,7 @@ print("---------------------- LR(0)-automa Computation ----------------------")
 initial_state = create_new_state(state_counter)
 state_counter += 1
 initial_state.isInitialState = True
-s_item = create_new_item(a_grammar[0], "$", 3, "Kernel", "Not-Reduce")
+s_item = create_new_item(a_grammar[0], ['$'], 3, "Kernel", "Not-Reduce")
 initial_state.add_item(s_item)
 apply_closure(initial_state, s_item)
 lr1_states.append(initial_state)
