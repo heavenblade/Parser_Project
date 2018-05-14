@@ -32,33 +32,45 @@ class nonTerminal:
 #------------------------------------------------------------------------------
 class lr1Item:
     production = []
-    type = ""
+    lookAhead = []
     dot = 0
+    type = ""
     isReduceItem = False
-    lookAhead = ""
 
-    def __init__ (self, production, type, dot, reduct, LA):
+    def __init__ (self, production, LA, dot, type, reduct):
         self.production = production
-        self.type = type
-        self.dot = dot
-        self.isReduceItem = reduct
         self.lookAhead = LA
+        self.dot = dot
+        self.type = type
+        self.isReduceItem = reduct
 
     def __eq__ (self, other):
-        if (self.production == other.production and self.type == other.type and self.dot == other.dot and self.isReduceItem == other.isReduceItem and self.lookAhead == other.lookAhead):
-            return True
-        else:
-            return False
+        lookaheads = []
+        if (self.production == other.production and self.dot == other.dot and self.type == other.type and self.isReduceItem == other.isReduceItem):
+            for element in self.lookAhead:
+                if (element not in lookaheads):
+                    lookaheads.append(element)
+            for element in other.lookAhead:
+                if (element not in lookaheads):
+                    lookaheads.append(element)
+            for LA in lookaheads:
+                if (LA in self.lookAhead):
+                    if (LA in other.lookAhead):
+                        return True
+                    else:
+                        return False
+                else:
+                    return False
 
     def __hash__(self):
-        return hash((self.production, self.type, self.dot, self.isReduceItem, self.lookAhead))
+        return hash((self.production, self.dot, self.type, self.isReduceItem))
 
-def create_new_item (production, type, dot, reduct, LA):
-    new_state = lr1Item(production, type, dot, reduct, LA)
+def create_new_item (production, LA, dot, type, reduct):
+    new_state = lr1Item(production, LA, dot, type, reduct)
     return new_state
 
 def print_item(item):
-    print(item.production, item.type, item.dot, item.isReduceItem, item.lookAhead)
+    print(item.production, item.lookAhead, item.dot, item.type, item.isReduceItem)
 #------------------------------------------------------------------------------
 class lr1State:
     name = 0
@@ -92,10 +104,18 @@ def apply_closure(state, my_item): # to be changed
         if (ffc.isNonTerminal(my_item.production[my_item.dot])):
             for production in grammar:
                 if (production[0][0] == my_item.production[my_item.dot]):
-                    if (production[0][3] == "#"):
-                        new_item = create_new_item(production[0], "Closure", 3, "Reduce", "test")
+                    temp_lookAhead_l = []
+                    if (my_item.dot == len(my_item.production)-1):
+                        for element in my_item.lookAhead:
+                            temp_lookAhead_l.append(element)
                     else:
-                        new_item = create_new_item(production[0], "Closure", 3, "Not-Reduce", "test")
+                        if (ffc.isTerminal(my_item.production[my_item.dot+1])):
+                            temp_lookAhead_l.append(my_item.production[my_item.dot+1])
+
+                    if (production[0][3] == "#"):
+                        new_item = create_new_item(production[0], temp_lookAhead_l, 3, "Closure", "Reduce")
+                    else:
+                        new_item = create_new_item(production[0], temp_lookAhead_l, 3, "Closure", "Not-Reduce")
                     if (new_item not in state.item_l):
                         state.add_item(new_item)
                         if (ffc.isNonTerminal(new_item.production[new_item.dot])):
@@ -197,7 +217,7 @@ print("---------------------- LR(0)-automa Computation ----------------------")
 initial_state = create_new_state(state_counter)
 state_counter += 1
 initial_state.isInitialState = True
-s_item = create_new_item(a_grammar[0], "Kernel", 3, "Not-Reduce", "$")
+s_item = create_new_item(a_grammar[0], "$", 3, "Kernel", "Not-Reduce")
 initial_state.add_item(s_item)
 apply_closure(initial_state, s_item)
 lr1_states.append(initial_state)
@@ -219,7 +239,7 @@ for state in lr1_states:
         new_state_items = []
         for item in state.item_l:
             if (item.production[item.dot] == element):
-                new_item = create_new_item(item.production, "Kernel", item.dot+1, "Reduce" if (item.dot+1 == len(item.production)) else "Not-Reduce", "test")
+                new_item = create_new_item(item.production, item.lookAhead, item.dot+1, "Kernel", "Reduce" if (item.dot+1 == len(item.production)) else "Not-Reduce")
                 new_state_items.append(new_item)
         for state_n in lr1_states:
                 if (check_kernel_equality(new_state_items, state_n)):
@@ -245,15 +265,15 @@ for state in lr1_states:
             transition_counter += 1
             if (new_transition not in transitions):
                 transitions.append(new_transition)
-'''
+
 for state in lr1_states:
     print("\nState " + str(state.name) + ":")
     for element in state.item_l:
-        print(element.production, ",", element.type, ", Dot is on " + str(element.dot), ", " + element.isReduceItem, ", " + element.lookAhead)
+        print(element.production + ",", element.lookAhead, ", " + str(element.dot) + ", " + element.type + ", " + element.isReduceItem)
 for transition in transitions:
     print("\nTransition " + str(transition.name) + ":")
     print(transition.name,  transition.element, transition.starting_state, transition.ending_state)
-'''
+
 # table Computation
 header = []
 for element in terminal_names:
