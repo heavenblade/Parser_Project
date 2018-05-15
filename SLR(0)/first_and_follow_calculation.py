@@ -72,7 +72,7 @@ def compute_follow(nT, production, my_non_terminals, p_prog):
 
     if (len(production[0]) > 4 and p_prog < len(production[0])-1):
         for elem in range(p_prog, len(production[0])):
-            if (isNonTerminal(production[0][elem])): # primo elemento della right-hand side è non-terminale
+            if (isNonTerminal(production[0][elem])):
                 for nT in my_non_terminals:
                     if nT.name == production[0][elem]:
                         if (elem < len(production[0])-1):
@@ -112,22 +112,22 @@ def compute_follow(nT, production, my_non_terminals, p_prog):
                                                                                 #print("Adding '" + first_to_add2 + "' to follow(" + nT.name + ") due to rule 3")
                                                     p_prog += 1
                         else:
-                            for element in my_non_terminals: # trovo il non-terminale nella right-hand side
+                            for element in my_non_terminals:
                                 if (element.name == production[0][-1]):
-                                    for driver in my_non_terminals: # trovo il driver
+                                    for driver in my_non_terminals:
                                         if (driver.name == production[0][0]):
                                             for follow_d in driver.follow_l:
                                                 if follow_d not in element.follow_l:
                                                     element.add_follow(follow_d)
                                                     #print("Adding '" + follow_d + "' to follow(" + production[0][-1] + ").")
-            else: # primo elemento della right-hand side è terminale
+            else:
                 #print("Recurring cuz i saw " + production[0][elem] + " in position " + str(elem-3))
                 compute_follow(nT, production, my_non_terminals, p_prog+1)
     else:
         if (isNonTerminal(production[0][p_prog])):
-            for element in my_non_terminals: # trovo il non-terminale nella right-hand side
+            for element in my_non_terminals:
                 if (element.name == production[0][-1]):
-                    for driver in my_non_terminals: # trovo il driver
+                    for driver in my_non_terminals:
                         if (driver.name == production[0][0]):
                             for follow_d in driver.follow_l:
                                 if follow_d not in element.follow_l:

@@ -45,6 +45,7 @@ class lr1Item:
         self.isReduceItem = reduct
 
     def __eq__ (self, other):
+        equal = False
         lookaheads = []
         if (self.production == other.production and self.dot == other.dot and self.type == other.type and self.isReduceItem == other.isReduceItem):
             for element in self.lookAhead:
@@ -56,11 +57,19 @@ class lr1Item:
             for LA in lookaheads:
                 if (LA in self.lookAhead):
                     if (LA in other.lookAhead):
-                        return True
+                        equal = True
                     else:
-                        return False
+                        equal = False
+                        break
                 else:
-                    return False
+                    equal = False
+                    break
+        else:
+            equal = False
+        if (equal):
+            return True
+        else:
+            return False
 
     def __hash__(self):
         return hash((self.production, self.dot, self.type, self.isReduceItem))
@@ -110,27 +119,31 @@ def apply_closure(state, my_item):
                             temp_lookAhead_l.append(element)
                     else:
                         p_prog = my_item.dot
-                        while (p_prog+1 < len(my_item.production)-1):
-                            if (ffc.isTerminal(my_item.production[my_item.dot+1])):
-                                temp_lookAhead_l.append(my_item.production[my_item.dot+1])
+                        while (p_prog+1 <= len(my_item.production)-1):
+                            if (ffc.isTerminal(my_item.production[p_prog+1])):
+                                if (my_item.production[p_prog+1] not in temp_lookAhead_l):
+                                    temp_lookAhead_l.append(my_item.production[p_prog+1])
                             else:
                                 for nT in non_terminals:
                                     if (nT.name == my_item.production[p_prog+1]):
                                         for first_nT in nT.first_l:
                                             if (first_nT != "#"):
-                                                temp_lookAhead_l.append(first_nT)
+                                                if (first_nT not in temp_lookAhead_l):
+                                                    temp_lookAhead_l.append(first_nT)
                                             else:
-                                                # se trovo che first(B) contiene eps, devo guardare C
+                                                if (p_prog+1 == len(my_item.production)-1):
+                                                    for item_clos_LA in my_item.lookAhead:
+                                                        if (item_clos_LA not in temp_lookAhead_l):
+                                                            temp_lookAhead_l.append(item_clos_LA)
                             p_prog += 1
-
                     if (production[0][3] == "#"):
                         new_item = create_new_item(production[0], temp_lookAhead_l, 3, "Closure", "Reduce")
                     else:
                         new_item = create_new_item(production[0], temp_lookAhead_l, 3, "Closure", "Not-Reduce")
                     if (new_item not in state.item_l):
-                        state.add_item(new_item)
-                        if (ffc.isNonTerminal(new_item.production[new_item.dot])):
-                            apply_closure(state, new_item)
+                        state.item_l.append(new_item)
+                    if (ffc.isNonTerminal(new_item.production[new_item.dot])):
+                        apply_closure(state, new_item)
 #------------------------------------------------------------------------------
 class transition:
     name = 0
@@ -330,8 +343,9 @@ for state in lr1_states:
                     if (item.production == production[0]):
                         new_entry = "R" + str(idx1+1)
                 for idx2, element in enumerate(header):
-                    if (ffc.isTerminal(element) or element == "$"):
-                        table[state.name][idx2].append(new_entry)
+                    for LA in item.lookAhead:
+                        if (element == LA):
+                            table[state.name][idx2].append(new_entry)
 
 for i in range(state_counter):
     lr1_table.add_row(table[i])
