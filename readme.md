@@ -13,10 +13,10 @@ LR(0)-parser
 SLR(0)-parser  
 LR(1)-parser  
 
-Current development:
+Current development:  
 LALR(1)-parser  
 
-Future development:
+Future development:  
 Strings parsing  
 Django web service for all the parsers above  
 
