@@ -1,6 +1,3 @@
-S->aAB
-S->bBc
-A->Bd
-A->#
-B->c
-B->#
+S–>AA
+A–>aA
+A–>b
