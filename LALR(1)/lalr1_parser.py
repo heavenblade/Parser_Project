@@ -1,5 +1,5 @@
 # This is a LALR(1) parser for grammars. This version is based on the LR(1)-automaton
-# states merging. Whethere they have the same LR(0)-items they get merged in a
+# states merging. If the states share the same LR(0)-items they get merged in a
 # unique state with the lookaheads merged together. The future implementation will be
 # based on the recursive equatios algorithm invented by Paola Quaglia. The process
 # follows the base LR(0)-automaton construction, while at the same time keeping track
@@ -307,7 +307,7 @@ for i in range(lr1_state_counter):
     for j in range(lr1_state_counter):
         if (i == j):
             check_merge_matrix[i][j] = 1
-
+# the problem is definitely here
 for state in lr1_states:
     for state_check in lr1_states:
         if (check_merge_matrix[state.name][state_check.name] != 1 and check_merge_matrix[state_check.name][state.name] != 1):
@@ -324,7 +324,7 @@ for state in lr1_states:
                     for LA in item_check.lookAhead:
                         if (LA not in item.lookAhead):
                             print("adding "+LA+" to "+item.production+" in "+str(state.name))
-                            item.lookAhead.append(LA)
+                            item.lookAhead.append(LA) #referenzio item a caso
                     check_merge_matrix[state.name][state_check.name] = 1
                     check_merge_matrix[state_check.name][state.name] = 1
 
