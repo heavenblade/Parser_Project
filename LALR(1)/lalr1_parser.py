@@ -1,8 +1,12 @@
-# This is a LALR(1) parser for grammars. This implementation will be the first
-# less optimized one. It works with state merging rather than with the recursive
-# equatios algorithm invented by Paola Quaglia.
-# It may not be optimized but it's a project i'm conducting in the free time
-# during my university studies.
+# This is a LALR(1) parser for grammars. This version is based on the LR(1)-automaton
+# states merging. Whethere they have the same LR(0)-items they get merged in a
+# unique state with the lookaheads merged together. The future implementation will be
+# based on the recursive equatios algorithm invented by Paola Quaglia. The process
+# follows the base LR(0)-automaton construction, while at the same time keeping track
+# of a set of recursive equations containing the lookaheads. At the end of the
+# LR(0)-automaton computation, the recursive equations get solved and the resulting
+# automaton is a LALR(1)-automaton as it was created through LR(1)-automaton state
+# merging.
 #
 # Check readme.txt in order to see input format of the grammar and eventual
 # output format.
@@ -169,11 +173,13 @@ terminal_names = []                                     # strings of terminals
 non_terminal_names = []                                 # just strings
 non_terminals = []                                      # actual non-terminals
 lr1_states = []                                         # array that will contain the LR(1)-automaton
-lalr1_states = []                                       # array that will contain the LALR(1)-automaton
 lr1_transitions = []                                    # array of transitions between the LR(1)-automaton states
+lr1_state_counter = 0
+lr1_transition_counter = 0
+lalr1_states = []                                       # array that will contain the LALR(1)-automaton
 lalr1_transitions = []                                  # array of transitions between the LALR(1)-automaton states
-state_counter = 0
-transition_counter = 0
+lalr1_state_counter = 0
+lalr1_transition_counter = 0
 
 # input section
 with open("grammar.txt", 'r') as f:
@@ -243,8 +249,8 @@ for prod in grammar:
 # computation of the LR(1)-automaton
 print("---------------------- LR(0)-automa Computation ----------------------")
 # starting state
-initial_state = create_new_state(state_counter)
-state_counter += 1
+initial_state = create_new_state(lr1_state_counter)
+lr1_state_counter += 1
 initial_state.isInitialState = True
 s_item = create_new_item(a_grammar[0], ['$'], 3, "Kernel", "Not-Reduce")
 initial_state.add_item(s_item)
@@ -278,26 +284,57 @@ for state in lr1_states:
                 else:
                     require_new_state = True
         if (require_new_state):
-            new_state = create_new_state(state_counter)
-            state_counter += 1
+            new_state = create_new_state(lr1_state_counter)
+            lr1_state_counter += 1
             lr1_states.append(new_state)
             for new_state_item in new_state_items:
                 if (new_state_item not in new_state.item_l):
                     new_state.add_item(new_state_item)
                 apply_closure(new_state, new_state_item)
-            new_transition = create_new_transition(transition_counter, element, state.name, new_state.name)
-            transition_counter += 1
+            new_transition = create_new_transition(lr1_transition_counter, element, state.name, new_state.name)
+            lr1_transition_counter += 1
             if (new_transition not in lr1_transitions):
                 lr1_transitions.append(new_transition)
         else:
-            new_transition = create_new_transition(transition_counter, element, state.name, destination_state)
-            transition_counter += 1
+            new_transition = create_new_transition(lr1_transition_counter, element, state.name, destination_state)
+            lr1_transition_counter += 1
             if (new_transition not in lr1_transitions):
                 lr1_transitions.append(new_transition)
 
 # merging of the states that share the same LR(0)-items with different lookaheads using the lookahead merging technique
+check_merge_matrix = numpy.zeros(shape = (lr1_state_counter, lr1_state_counter))
+for i in range(lr1_state_counter):
+    for j in range(lr1_state_counter):
+        if (i == j):
+            check_merge_matrix[i][j] = 1
 
 for state in lr1_states:
+    for state_check in lr1_states:
+        if (check_merge_matrix[state.name][state_check.name] != 1 and check_merge_matrix[state_check.name][state.name] != 1):
+            for item in state.item_l:
+                for item_check in state_check.item_l:
+                    if (item.production == item_check.production and item.dot == item_check.dot and item.type == item_check.type and item.isReduceItem == item_check.isReduceItem):
+                        equal = True
+                    else:
+                        equal = False
+                        break
+            if (equal):
+                if (state not in lalr1_states):
+                    print(state.name, state_check.name)
+                    for LA in item_check.lookAhead:
+                        if (LA not in item.lookAhead):
+                            print("adding "+LA+" to "+item.production+" in "+str(state.name))
+                            item.lookAhead.append(LA)
+                    check_merge_matrix[state.name][state_check.name] = 1
+                    check_merge_matrix[state_check.name][state.name] = 1
+
+print("LR(1)-states:")
+for state in lr1_states:
+    print("\nState " + str(state.name) + ":")
+    for element in state.item_l:
+        print(element.production + ",", element.lookAhead, ", " + str(element.dot) + ", " + element.type + ", " + element.isReduceItem)
+print("\nLALR(1)-states:")
+for state in lalr1_states:
     print("\nState " + str(state.name) + ":")
     for element in state.item_l:
         print(element.production + ",", element.lookAhead, ", " + str(element.dot) + ", " + element.type + ", " + element.isReduceItem)
@@ -316,10 +353,10 @@ for element in non_terminal_names:
 
 lalr1_table = PrettyTable(header)
 total_lenght = len(non_terminal_names) + len(terminal_names)
-table = [["" for x in range(total_lenght)] for y in range(state_counter)]
+table = [["" for x in range(total_lenght)] for y in range(lr1_state_counter)] #TBM
 
-# LR(1)-parsing table computation
-for idx_row in range(state_counter):
+# LALR(1)-parsing table computation
+for idx_row in range(lr1_state_counter): #TBM
     for idx_col in range(total_lenght):
         if (idx_col == 0):
             table[idx_row][idx_col] = idx_row
@@ -354,7 +391,7 @@ for state in lr1_states:
                         if (element == LA):
                             table[state.name][idx2].append(new_entry)
 
-for i in range(state_counter):
+for i in range(lr1_state_counter): #TBM
     lalr1_table.add_row(table[i])
 
 print("\nLALR(1) parsing table of the grammar G:")
