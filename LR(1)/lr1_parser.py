@@ -107,7 +107,7 @@ def check_kernel_equality(new_kernel, state_n):
         return True
     else:
         return False
-                                        #    S->a.ABC, $  dove B->b,# C->c,#  closure di A prende b,c,$ come LA
+
 def apply_closure(state, my_item):
     if (my_item.isReduceItem == "Not-Reduce"):
         if (ffc.isNonTerminal(my_item.production[my_item.dot])):
