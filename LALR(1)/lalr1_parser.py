@@ -37,6 +37,31 @@ class nonTerminal:
     def add_follow (self, element):
         self.follow_l.append(element)
 #------------------------------------------------------------------------------
+class lr0Item:
+    production = []
+    type = ""
+    dot = 0
+    isReduceItem = False
+
+    def __init__ (self, production, type, dot, reduct):
+        self.production = production
+        self.type = type
+        self.dot = dot
+        self.isReduceItem = reduct
+
+    def __eq__ (self, other):
+        if (self.production == other.production and self.type == other.type and self.dot == other.dot and self.isReduceItem == other.isReduceItem):
+            return True
+        else:
+            return False
+
+    def __hash__(self):
+        return hash((self.production, self.type, self.dot, self.isReduceItem))
+
+def create_new_lr0_item (production, type, dot, reduct):
+    new_state = lr0Item(production, type, dot, reduct)
+    return new_state
+#------------------------------------------------------------------------------
 class lr1Item:
     production = []
     lookAhead = []
@@ -95,11 +120,13 @@ class lr1State:
     name = 0
     item_l = []
     isInitialState = False
+    gotMerged = False
 
     def __init__ (self, state_count):
         self.name = state_count
         self.item_l = []
         self.isInitialState = False
+        self.gotMerged = False
 
     def add_item (self, item):
         self.item_l.append(item)
@@ -114,6 +141,12 @@ def check_kernel_equality(new_kernel, state_n):
         if (item.type == "Kernel"):
             state_n_ker.append(item)
     if (set(new_kernel) == set(state_n_ker)):
+        return True
+    else:
+        return False
+
+def check_states_equality_for_merge(set_1, set_2):
+    if (set(set_1) == set(set_2)):
         return True
     else:
         return False
@@ -309,31 +342,30 @@ for state in lr1_states:
                 lr1_transitions.append(new_transition)
 
 # merging of the states that share the same LR(0)-items with different lookaheads using the lookahead merging technique
-check_merge_matrix = numpy.zeros(shape = (lr1_state_counter, lr1_state_counter))
-for i in range(lr1_state_counter):
-    for j in range(lr1_state_counter):
-        if (i == j):
-            check_merge_matrix[i][j] = 1
 for state in lr1_states:
     for state_check in lr1_states:
-        if (check_merge_matrix[state.name][state_check.name] != 1 and check_merge_matrix[state_check.name][state.name] != 1):
+        equal = False
+        if (not state.gotMerged and not state_check.gotMerged and state.name != state_check.name):
             first_item_l = []
             second_item_l = []
-            for item in state.item_l:
-                for item_check in state_check.item_l:
-                    if (item.production == item_check.production and item.dot == item_check.dot and item.type == item_check.type and item.isReduceItem == item_check.isReduceItem):
-                        equal = True
-                        first_item_l.append(item)
-                        second_item_l.append(item_check)
-                    else:
-                        equal = False
-                        break
+            for lr1_item in state.item_l:
+                new_tmp_lr0_item = create_new_lr0_item (lr1_item.production, lr1_item.dot, lr1_item.type, lr1_item.isReduceItem)
+                first_item_l.append(new_tmp_lr0_item)
+            for lr1_item in state_check.item_l:
+                new_tmp_lr0_item = create_new_lr0_item (lr1_item.production, lr1_item.dot, lr1_item.type, lr1_item.isReduceItem)
+                second_item_l.append(new_tmp_lr0_item)
+            if (check_states_equality_for_merge(first_item_l, second_item_l)):
+                equal = True
+                state_1 = state
+                state_2 = state_check
+            else:
+                equal = False
             if (equal):
                 new_state = create_new_state(state.name)
-                temp_lookaheads = []
                 print("\nmerging "+str(state.name)+" and "+str(state_check.name))
-                for item_1 in first_item_l:
-                    for item_2 in second_item_l:
+                for item_1 in state_1.item_l:
+                    temp_lookaheads = []
+                    for item_2 in state_2.item_l:
                         if (item_1.production == item_2.production and item_1.dot == item_2.dot and item_1.type == item_2.type and item_1.isReduceItem == item_2.isReduceItem):
                             print_item(item_1)
                             print_item(item_2)
@@ -343,13 +375,15 @@ for state in lr1_states:
                                 if (LA_2 not in item_1.lookAhead):
                                     print("adding "+LA_2+" to "+item_1.production)
                                     temp_lookaheads.append(LA_2)
-                            new_item = create_new_item(item_1.production, item_1.dot, item_1.type, item_1.isReduceItem)
-                            set_lookaheads(new_item, temp_lookaheads)
-                            new_state.add_item(new_item)
-                check_merge_matrix[state.name][state_check.name] = 1
-                check_merge_matrix[state_check.name][state.name] = 1
+                    new_item = create_new_item(item_1.production, item_1.dot, item_1.type, item_1.isReduceItem)
+                    set_lookaheads(new_item, temp_lookaheads)
+                    new_state.add_item(new_item)
+                state.gotMerged = True
+                state_check.gotMerged = True
                 lalr1_states.append(new_state)
-
+            else:
+                if (not state.gotMerged and state not in lalr1_states):
+                    lalr1_states.append(state)
 
 print("\nLR(1)-states:")
 for state in lr1_states:
