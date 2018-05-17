@@ -44,9 +44,9 @@ class lr1Item:
     type = ""
     isReduceItem = False
 
-    def __init__ (self, production, LA, dot, type, reduct):
+    def __init__ (self, production, dot, type, reduct):
         self.production = production
-        self.lookAhead = LA
+        self.lookAhead = []
         self.dot = dot
         self.type = type
         self.isReduceItem = reduct
@@ -81,9 +81,12 @@ class lr1Item:
     def __hash__(self):
         return hash((self.production, self.dot, self.type, self.isReduceItem))
 
-def create_new_item (production, LA, dot, type, reduct):
-    new_state = lr1Item(production, LA, dot, type, reduct)
+def create_new_item (production, dot, type, reduct):
+    new_state = lr1Item(production, dot, type, reduct)
     return new_state
+
+def set_lookaheads (item, lookahead_l):
+    item.lookAhead = lookahead_l
 
 def print_item(item):
     print(item.production, item.lookAhead, item.dot, item.type, item.isReduceItem)
@@ -144,9 +147,11 @@ def apply_closure(state, my_item):
                                                             temp_lookAhead_l.append(item_clos_LA)
                             p_prog += 1
                     if (production[0][3] == "#"):
-                        new_item = create_new_item(production[0], temp_lookAhead_l, 3, "Closure", "Reduce")
+                        new_item = create_new_item(production[0], 3, "Closure", "Reduce")
+                        set_lookaheads(new_item, temp_lookAhead_l)
                     else:
-                        new_item = create_new_item(production[0], temp_lookAhead_l, 3, "Closure", "Not-Reduce")
+                        new_item = create_new_item(production[0], 3, "Closure", "Not-Reduce")
+                        set_lookaheads(new_item, temp_lookAhead_l)
                     if (new_item not in state.item_l):
                         state.item_l.append(new_item)
                     if (ffc.isNonTerminal(new_item.production[new_item.dot])):
@@ -252,7 +257,8 @@ print("---------------------- LR(0)-automa Computation ----------------------")
 initial_state = create_new_state(lr1_state_counter)
 lr1_state_counter += 1
 initial_state.isInitialState = True
-s_item = create_new_item(a_grammar[0], ['$'], 3, "Kernel", "Not-Reduce")
+s_item = create_new_item(a_grammar[0], 3, "Kernel", "Not-Reduce")
+set_lookaheads(s_item, ['$'])
 initial_state.add_item(s_item)
 apply_closure(initial_state, s_item)
 lr1_states.append(initial_state)
@@ -274,7 +280,8 @@ for state in lr1_states:
         new_state_items = []
         for item in state.item_l:
             if (item.production[item.dot] == element):
-                new_item = create_new_item(item.production, item.lookAhead, item.dot+1, "Kernel", "Reduce" if (item.dot+1 == len(item.production)) else "Not-Reduce")
+                new_item = create_new_item(item.production, item.dot+1, "Kernel", "Reduce" if (item.dot+1 == len(item.production)) else "Not-Reduce")
+                set_lookaheads(new_item, item.lookAhead)
                 new_state_items.append(new_item)
         for state_n in lr1_states:
                 if (check_kernel_equality(new_state_items, state_n)):
@@ -307,28 +314,44 @@ for i in range(lr1_state_counter):
     for j in range(lr1_state_counter):
         if (i == j):
             check_merge_matrix[i][j] = 1
-# the problem is definitely here
 for state in lr1_states:
     for state_check in lr1_states:
         if (check_merge_matrix[state.name][state_check.name] != 1 and check_merge_matrix[state_check.name][state.name] != 1):
+            first_item_l = []
+            second_item_l = []
             for item in state.item_l:
                 for item_check in state_check.item_l:
                     if (item.production == item_check.production and item.dot == item_check.dot and item.type == item_check.type and item.isReduceItem == item_check.isReduceItem):
                         equal = True
+                        first_item_l.append(item)
+                        second_item_l.append(item_check)
                     else:
                         equal = False
                         break
             if (equal):
-                if (state not in lalr1_states):
-                    print(state.name, state_check.name)
-                    for LA in item_check.lookAhead:
-                        if (LA not in item.lookAhead):
-                            print("adding "+LA+" to "+item.production+" in "+str(state.name))
-                            item.lookAhead.append(LA) #referenzio item a caso
-                    check_merge_matrix[state.name][state_check.name] = 1
-                    check_merge_matrix[state_check.name][state.name] = 1
+                new_state = create_new_state(state.name)
+                temp_lookaheads = []
+                print("\nmerging "+str(state.name)+" and "+str(state_check.name))
+                for item_1 in first_item_l:
+                    for item_2 in second_item_l:
+                        if (item_1.production == item_2.production and item_1.dot == item_2.dot and item_1.type == item_2.type and item_1.isReduceItem == item_2.isReduceItem):
+                            print_item(item_1)
+                            print_item(item_2)
+                            for LA_1 in item_1.lookAhead:
+                                temp_lookaheads.append(LA_1)
+                            for LA_2 in item_2.lookAhead:
+                                if (LA_2 not in item_1.lookAhead):
+                                    print("adding "+LA_2+" to "+item_1.production)
+                                    temp_lookaheads.append(LA_2)
+                            new_item = create_new_item(item_1.production, item_1.dot, item_1.type, item_1.isReduceItem)
+                            set_lookaheads(new_item, temp_lookaheads)
+                            new_state.add_item(new_item)
+                check_merge_matrix[state.name][state_check.name] = 1
+                check_merge_matrix[state_check.name][state.name] = 1
+                lalr1_states.append(new_state)
 
-print("LR(1)-states:")
+
+print("\nLR(1)-states:")
 for state in lr1_states:
     print("\nState " + str(state.name) + ":")
     for element in state.item_l:
