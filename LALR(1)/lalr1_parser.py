@@ -342,10 +342,16 @@ for state in lr1_states:
                 lr1_transitions.append(new_transition)
 
 # merging of the states that share the same LR(0)-items with different lookaheads using the lookahead merging technique
+check_merge_matrix = numpy.zeros(shape = (lr1_state_counter, lr1_state_counter))
+new_lalr1_states = []
+for i in range(lr1_state_counter):
+    for j in range(lr1_state_counter):
+        if (i == j):
+            check_merge_matrix[i][j] = 1
 for state in lr1_states:
     for state_check in lr1_states:
         equal = False
-        if (not state.gotMerged and not state_check.gotMerged and state.name != state_check.name):
+        if (check_merge_matrix[state.name][state_check.name] != 1 and check_merge_matrix[state_check.name][state.name] != 1):
             first_item_l = []
             second_item_l = []
             for lr1_item in state.item_l:
@@ -361,7 +367,8 @@ for state in lr1_states:
             else:
                 equal = False
             if (equal):
-                new_state = create_new_state(state.name)
+                new_name = str(state.name)+str(state_check.name)
+                new_state = create_new_state(new_name)
                 print("\nmerging "+str(state.name)+" and "+str(state_check.name))
                 for item_1 in state_1.item_l:
                     temp_lookaheads = []
@@ -378,12 +385,18 @@ for state in lr1_states:
                     new_item = create_new_item(item_1.production, item_1.dot, item_1.type, item_1.isReduceItem)
                     set_lookaheads(new_item, temp_lookaheads)
                     new_state.add_item(new_item)
+                check_merge_matrix[state.name][state_check.name] = 1
+                check_merge_matrix[state_check.name][state.name] = 1
                 state.gotMerged = True
                 state_check.gotMerged = True
+                new_lalr1_states.append(new_state)
+for state in lr1_states:
+    if (not state.gotMerged):
+        lalr1_states.append(state)
+    else:
+        for new_state in new_lalr1_states:
+            if (str(state.name) in str(new_state.name) and new_state not in lalr1_states):
                 lalr1_states.append(new_state)
-            else:
-                if (not state.gotMerged and state not in lalr1_states):
-                    lalr1_states.append(state)
 
 print("\nLR(1)-states:")
 for state in lr1_states:
