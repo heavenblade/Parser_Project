@@ -107,8 +107,8 @@ class lr1Item:
         return hash((self.production, self.dot, self.type, self.isReduceItem))
 
 def create_new_item (production, dot, type, reduct):
-    new_state = lr1Item(production, dot, type, reduct)
-    return new_state
+    new_item = lr1Item(production, dot, type, reduct)
+    return new_item
 
 def set_lookaheads (item, lookahead_l):
     item.lookAhead = lookahead_l
@@ -118,12 +118,14 @@ def print_item(item):
 #------------------------------------------------------------------------------
 class lr1State:
     name = 0
+    index = 0
     item_l = []
     isInitialState = False
     gotMerged = False
 
-    def __init__ (self, state_count):
-        self.name = state_count
+    def __init__ (self, name, state_count):
+        self.name = name
+        self.index = state_count
         self.item_l = []
         self.isInitialState = False
         self.gotMerged = False
@@ -131,8 +133,8 @@ class lr1State:
     def add_item (self, item):
         self.item_l.append(item)
 
-def create_new_state (name):
-    new_state = lr1State(name)
+def create_new_state (name, state_count):
+    new_state = lr1State(name, state_count)
     return new_state
 
 def check_kernel_equality(new_kernel, state_n):
@@ -193,14 +195,20 @@ def apply_closure(state, my_item):
 class transition:
     name = 0
     element = ''
-    starting_state = 0
-    ending_state = 0
+    starting_state = ""
+    ending_state = ""
 
     def __init__ (self, transition_count, elem, s_state, e_state):
         self.name = transition_count
         self.element = elem
         self.starting_state = s_state
         self.ending_state = e_state
+
+    def __eq__ (self, other):
+        if (self.name == other.name and self.element == other.element and self.starting_state == other.starting_state and self.ending_state == other.ending_state):
+            return True
+        else:
+            return False
 
 def create_new_transition (name, element, s_state, e_state):
     new_transition = transition(name, element, s_state, e_state)
@@ -287,7 +295,7 @@ for prod in grammar:
 # computation of the LR(1)-automaton
 print("---------------------- LR(0)-automa Computation ----------------------")
 # starting state
-initial_state = create_new_state(lr1_state_counter)
+initial_state = create_new_state(str(lr1_state_counter), lr1_state_counter)
 lr1_state_counter += 1
 initial_state.isInitialState = True
 s_item = create_new_item(a_grammar[0], 3, "Kernel", "Not-Reduce")
@@ -306,7 +314,6 @@ for state in lr1_states:
         if (item.isReduceItem == "Not-Reduce"):
             if (item.production[item.dot] not in new_symb_transitions):
                 new_symb_transitions.append(item.production[item.dot])
-
     for element in new_symb_transitions:
         require_new_state = False
         destination_state = 0
@@ -324,19 +331,19 @@ for state in lr1_states:
                 else:
                     require_new_state = True
         if (require_new_state):
-            new_state = create_new_state(lr1_state_counter)
+            new_state = create_new_state(str(lr1_state_counter), lr1_state_counter)
             lr1_state_counter += 1
             lr1_states.append(new_state)
             for new_state_item in new_state_items:
                 if (new_state_item not in new_state.item_l):
                     new_state.add_item(new_state_item)
                 apply_closure(new_state, new_state_item)
-            new_transition = create_new_transition(lr1_transition_counter, element, state.name, new_state.name)
+            new_transition = create_new_transition(lr1_transition_counter, element, state.index, new_state.index)
             lr1_transition_counter += 1
             if (new_transition not in lr1_transitions):
                 lr1_transitions.append(new_transition)
         else:
-            new_transition = create_new_transition(lr1_transition_counter, element, state.name, destination_state)
+            new_transition = create_new_transition(lr1_transition_counter, element, state.index, destination_state)
             lr1_transition_counter += 1
             if (new_transition not in lr1_transitions):
                 lr1_transitions.append(new_transition)
@@ -351,7 +358,7 @@ for i in range(lr1_state_counter):
 for state in lr1_states:
     for state_check in lr1_states:
         equal = False
-        if (check_merge_matrix[state.name][state_check.name] != 1 and check_merge_matrix[state_check.name][state.name] != 1):
+        if (check_merge_matrix[state.index][state_check.index] != 1 and check_merge_matrix[state_check.index][state.index] != 1):
             first_item_l = []
             second_item_l = []
             for lr1_item in state.item_l:
@@ -367,9 +374,9 @@ for state in lr1_states:
             else:
                 equal = False
             if (equal):
-                new_name = str(state.name)+str(state_check.name)
-                new_state = create_new_state(new_name)
-                print("\nmerging "+str(state.name)+" and "+str(state_check.name))
+                new_name = state.name + state_check.name
+                new_state = create_new_state(new_name, int(state.name))
+                print("\nmerging "+state.name+" and "+state_check.name)
                 for item_1 in state_1.item_l:
                     temp_lookaheads = []
                     for item_2 in state_2.item_l:
@@ -385,8 +392,8 @@ for state in lr1_states:
                     new_item = create_new_item(item_1.production, item_1.dot, item_1.type, item_1.isReduceItem)
                     set_lookaheads(new_item, temp_lookaheads)
                     new_state.add_item(new_item)
-                check_merge_matrix[state.name][state_check.name] = 1
-                check_merge_matrix[state_check.name][state.name] = 1
+                check_merge_matrix[state.index][state_check.index] = 1
+                check_merge_matrix[state_check.index][state.index] = 1
                 state.gotMerged = True
                 state_check.gotMerged = True
                 new_lalr1_states.append(new_state)
@@ -396,21 +403,38 @@ for state in lr1_states:
         lalr1_state_counter += 1
     else:
         for new_state in new_lalr1_states:
-            if (str(state.name) in str(new_state.name) and new_state not in lalr1_states):
+            if (str(state.name) in new_state.name and new_state not in lalr1_states):
                 lalr1_states.append(new_state)
                 lalr1_state_counter += 1
+for idx, state in enumerate(lalr1_states):
+    if (idx != state.index):
+        state.index = idx
 
+# transition update
+
+'''
+print("\nnew transitions")
+for transition in new_transitions:
+    print("\nTransition " + str(transition.name) + ":")
+    print(transition.name,  transition.element, transition.starting_state, transition.ending_state)
+'''
 print("\nLR(1)-states:")
 for state in lr1_states:
-    print("\nState " + str(state.name) + ":")
+    print("\nState " + str(state.name) + ", idx " + str(state.index) + ":")
     for element in state.item_l:
         print(element.production + ",", element.lookAhead, ", " + str(element.dot) + ", " + element.type + ", " + element.isReduceItem)
 print("\nLALR(1)-states:")
 for state in lalr1_states:
-    print("\nState " + str(state.name) + ":")
+    print("\nState " + str(state.name) + ", idx " + str(state.index) + ":")
     for element in state.item_l:
         print(element.production + ",", element.lookAhead, ", " + str(element.dot) + ", " + element.type + ", " + element.isReduceItem)
+
+print("\nLR(1)-transitions")
 for transition in lr1_transitions:
+    print("\nTransition " + str(transition.name) + ":")
+    print(transition.name,  transition.element, transition.starting_state, transition.ending_state)
+print("\nLALR(1)-transitions")
+for transition in lalr1_transitions:
     print("\nTransition " + str(transition.name) + ":")
     print(transition.name,  transition.element, transition.starting_state, transition.ending_state)
 
@@ -444,12 +468,16 @@ for transition in lr1_transitions:
         new_entry = "Goto " + str(transition.ending_state)
         for idx, element in enumerate(header):
             if (element == transition.element):
-                table[transition.starting_state][idx].append(new_entry)
+                for state in lalr1_states:
+                    if (transition.starting_state == state.index):
+                        table[state.index][idx].append(new_entry)
     elif (ffc.isTerminal(transition.element)):
         new_entry = "S" + str(transition.ending_state)
         for idx, element in enumerate(header):
             if (element == transition.element):
-                table[transition.starting_state][idx].append(new_entry)
+                for state in lalr1_states:
+                    if (transition.starting_state == state.index):
+                        table[state.index][idx].append(new_entry)
 for state_idx, state in enumerate(lalr1_states):
     for item in state.item_l:
         if (item.production != "Q->S"):
