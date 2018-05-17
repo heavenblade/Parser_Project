@@ -393,10 +393,12 @@ for state in lr1_states:
 for state in lr1_states:
     if (not state.gotMerged):
         lalr1_states.append(state)
+        lalr1_state_counter += 1
     else:
         for new_state in new_lalr1_states:
             if (str(state.name) in str(new_state.name) and new_state not in lalr1_states):
                 lalr1_states.append(new_state)
+                lalr1_state_counter += 1
 
 print("\nLR(1)-states:")
 for state in lr1_states:
@@ -423,13 +425,13 @@ for element in non_terminal_names:
 
 lalr1_table = PrettyTable(header)
 total_lenght = len(non_terminal_names) + len(terminal_names)
-table = [["" for x in range(total_lenght)] for y in range(lr1_state_counter)] #TBM
+table = [["" for x in range(total_lenght)] for y in range(lalr1_state_counter)] #TBM
 
 # LALR(1)-parsing table computation
-for idx_row in range(lr1_state_counter): #TBM
+for idx_row in range(lalr1_state_counter): #TBM
     for idx_col in range(total_lenght):
         if (idx_col == 0):
-            table[idx_row][idx_col] = idx_row
+            table[idx_row][idx_col] = lalr1_states[idx_row].name
         else:
             table[idx_row][idx_col] = []
 
@@ -448,7 +450,7 @@ for transition in lr1_transitions:
         for idx, element in enumerate(header):
             if (element == transition.element):
                 table[transition.starting_state][idx].append(new_entry)
-for state in lr1_states:
+for state_idx, state in enumerate(lalr1_states):
     for item in state.item_l:
         if (item.production != "Q->S"):
             new_entry = ""
@@ -459,9 +461,9 @@ for state in lr1_states:
                 for idx2, element in enumerate(header):
                     for LA in item.lookAhead:
                         if (element == LA):
-                            table[state.name][idx2].append(new_entry)
+                            table[state_idx][idx2].append(new_entry)
 
-for i in range(lr1_state_counter): #TBM
+for i in range(lalr1_state_counter): #TBM
     lalr1_table.add_row(table[i])
 
 print("\nLALR(1) parsing table of the grammar G:")
