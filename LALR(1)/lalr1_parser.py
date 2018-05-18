@@ -192,9 +192,9 @@ def apply_closure(state, my_item):
                     if (ffc.isNonTerminal(new_item.production[new_item.dot])):
                         apply_closure(state, new_item)
 #------------------------------------------------------------------------------
-class transition:
+class lr1transition:
     name = 0
-    element = ''
+    element = ""
     starting_state = ""
     ending_state = ""
 
@@ -211,7 +211,7 @@ class transition:
             return False
 
 def create_new_transition (name, element, s_state, e_state):
-    new_transition = transition(name, element, s_state, e_state)
+    new_transition = lr1transition(name, element, s_state, e_state)
     return new_transition
 #------------------------------------------------------------------------------
 # variables declaration section
@@ -411,6 +411,37 @@ for idx, state in enumerate(lalr1_states):
         state.index = idx
 
 # transition update
+for transition in lr1_transitions:
+    new_transition = create_new_transition(lalr1_transition_counter, transition.element, "", "")
+    s_state_mod = False
+    s_state_name = ""
+    e_state_mod = False
+    e_state_name = ""
+    for state in lr1_states:
+        if (state.name == transition.starting_state):
+            if (state.gotMerged):
+                s_state_mod = True
+                s_state_name = state.name
+    for state in lr1_states:
+        if (state.name == transition.ending_state):
+            if (state.gotMerged):
+                e_state_mod = True
+                e_state_name = state.name
+    if (s_state_mod or e_state_mod):
+        for state in lalr1_states:
+            if (s_state_name in state.name):
+                new_transition.starting_state = state.name
+            if (e_state_name in state.name):
+                new_transition.ending_state = state.name
+        if (new_transition not in lalr1_transitions):
+            lalr1_transitions.append(new_transition)
+            lalr1_transition_counter += 1
+    else:
+        if (transition not in lalr1_transitions):
+            transition.name = lalr1_transition_counter
+            lalr1_transitions.append(transition)
+            lalr1_transition_counter += 1
+
 
 '''
 print("\nnew transitions")
