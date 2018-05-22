@@ -213,6 +213,9 @@ class lr1transition:
 def create_new_transition (name, element, s_state, e_state):
     new_transition = lr1transition(name, element, s_state, e_state)
     return new_transition
+
+def print_transition(transition):
+    print(transition.name, transition.element, transition.starting_state, transition.ending_state)
 #------------------------------------------------------------------------------
 # variables declaration section
 terminal_names = []                                     # strings of terminals
@@ -376,18 +379,16 @@ for state in lr1_states:
             if (equal):
                 new_name = state.name + state_check.name
                 new_state = create_new_state(new_name, int(state.name))
-                print("\nmerging "+state.name+" and "+state_check.name)
+                #print("\nmerging "+state.name+" and "+state_check.name)
                 for item_1 in state_1.item_l:
                     temp_lookaheads = []
                     for item_2 in state_2.item_l:
                         if (item_1.production == item_2.production and item_1.dot == item_2.dot and item_1.type == item_2.type and item_1.isReduceItem == item_2.isReduceItem):
-                            print_item(item_1)
-                            print_item(item_2)
                             for LA_1 in item_1.lookAhead:
                                 temp_lookaheads.append(LA_1)
                             for LA_2 in item_2.lookAhead:
                                 if (LA_2 not in item_1.lookAhead):
-                                    print("adding "+LA_2+" to "+item_1.production)
+                                    #print("adding "+LA_2+" to "+item_1.production)
                                     temp_lookaheads.append(LA_2)
                     new_item = create_new_item(item_1.production, item_1.dot, item_1.type, item_1.isReduceItem)
                     set_lookaheads(new_item, temp_lookaheads)
@@ -397,6 +398,7 @@ for state in lr1_states:
                 state.gotMerged = True
                 state_check.gotMerged = True
                 new_lalr1_states.append(new_state)
+                new_state.gotMerged = True
 for state in lr1_states:
     if (not state.gotMerged):
         lalr1_states.append(state)
@@ -412,61 +414,50 @@ for idx, state in enumerate(lalr1_states):
 
 # transition update
 for transition in lr1_transitions:
-    new_transition = create_new_transition(lalr1_transition_counter, transition.element, "", "")
+    new_transition = create_new_transition(lalr1_transition_counter, transition.element, transition.starting_state, transition.ending_state)
     s_state_mod = False
     s_state_name = ""
     e_state_mod = False
     e_state_name = ""
-    for state in lr1_states:
-        if (state.name == transition.starting_state):
+    alreadyIn = False
+    for state in lalr1_states:
+        if (str(transition.starting_state) in str(state.name)):
             if (state.gotMerged):
                 s_state_mod = True
                 s_state_name = state.name
-    for state in lr1_states:
-        if (state.name == transition.ending_state):
+                break
+    for state in lalr1_states:
+        if (str(transition.ending_state) in str(state.name)):
             if (state.gotMerged):
                 e_state_mod = True
                 e_state_name = state.name
-    if (s_state_mod or e_state_mod):
-        for state in lalr1_states:
-            if (s_state_name in state.name):
-                new_transition.starting_state = state.name
-            if (e_state_name in state.name):
-                new_transition.ending_state = state.name
-        if (new_transition not in lalr1_transitions):
-            lalr1_transitions.append(new_transition)
-            lalr1_transition_counter += 1
-    else:
-        if (transition not in lalr1_transitions):
-            transition.name = lalr1_transition_counter
-            lalr1_transitions.append(transition)
-            lalr1_transition_counter += 1
+                break
+    if (s_state_mod):
+        new_transition.starting_state = s_state_name
+    if (e_state_mod):
+        new_transition.ending_state = e_state_name
 
+    if (lalr1_transition_counter == 0):
+        lalr1_transitions.append(new_transition)
+        lalr1_transition_counter += 1
 
-'''
-print("\nnew transitions")
-for transition in new_transitions:
-    print("\nTransition " + str(transition.name) + ":")
-    print(transition.name,  transition.element, transition.starting_state, transition.ending_state)
-'''
-print("\nLR(1)-states:")
-for state in lr1_states:
-    print("\nState " + str(state.name) + ", idx " + str(state.index) + ":")
-    for element in state.item_l:
-        print(element.production + ",", element.lookAhead, ", " + str(element.dot) + ", " + element.type + ", " + element.isReduceItem)
+    for lalr_transition in lalr1_transitions:
+        if (new_transition.element == lalr_transition.element and new_transition.starting_state == lalr_transition.starting_state and new_transition.ending_state == lalr_transition.ending_state):
+            alreadyIn = True
+            break
+        else:
+            alreadyIn = False
+    if (not alreadyIn):
+        lalr1_transitions.append(new_transition)
+        lalr1_transition_counter += 1
+        
 print("\nLALR(1)-states:")
 for state in lalr1_states:
     print("\nState " + str(state.name) + ", idx " + str(state.index) + ":")
     for element in state.item_l:
         print(element.production + ",", element.lookAhead, ", " + str(element.dot) + ", " + element.type + ", " + element.isReduceItem)
-
-print("\nLR(1)-transitions")
-for transition in lr1_transitions:
-    print("\nTransition " + str(transition.name) + ":")
-    print(transition.name,  transition.element, transition.starting_state, transition.ending_state)
 print("\nLALR(1)-transitions")
 for transition in lalr1_transitions:
-    print("\nTransition " + str(transition.name) + ":")
     print(transition.name,  transition.element, transition.starting_state, transition.ending_state)
 
 # table Computation
@@ -493,21 +484,21 @@ for idx_row in range(lalr1_state_counter): #TBM
 for idx, element in enumerate(header):
     if (element == "$"):
         table[1][idx].append("Accept")
-for transition in lr1_transitions:
+for transition in lalr1_transitions:
     new_entry = ""
     if (ffc.isNonTerminal(transition.element)):
         new_entry = "Goto " + str(transition.ending_state)
         for idx, element in enumerate(header):
             if (element == transition.element):
                 for state in lalr1_states:
-                    if (transition.starting_state == state.index):
+                    if (str(transition.starting_state) == str(state.name)):
                         table[state.index][idx].append(new_entry)
     elif (ffc.isTerminal(transition.element)):
         new_entry = "S" + str(transition.ending_state)
         for idx, element in enumerate(header):
             if (element == transition.element):
                 for state in lalr1_states:
-                    if (transition.starting_state == state.index):
+                    if (str(transition.starting_state) == str(state.name)):
                         table[state.index][idx].append(new_entry)
 for state_idx, state in enumerate(lalr1_states):
     for item in state.item_l:
