@@ -1,4 +1,4 @@
-# This is a SLR(0) parser for grammars. It may not be optimized but it's
+# This is a LR(1) parser for grammars. It may not be optimized but it's
 # a project i'm conducting in the free time during my university studies.
 #
 # Check readme.txt in order to see input format of the grammar and eventual
@@ -9,7 +9,7 @@
 import csv
 import numpy
 import sys
-import first_and_follow_calculation as ffc
+from utils import first_and_follow_calculation as ffc
 from prettytable import PrettyTable
 #------------------------------------------------------------------------------
 class nonTerminal:
@@ -30,35 +30,58 @@ class nonTerminal:
     def add_follow (self, element):
         self.follow_l.append(element)
 #------------------------------------------------------------------------------
-class lr0Item:
+class lr1Item:
     production = []
-    type = ""
+    lookAhead = []
     dot = 0
+    type = ""
     isReduceItem = False
 
-    def __init__ (self, production, type, dot, reduct):
+    def __init__ (self, production, LA, dot, type, reduct):
         self.production = production
-        self.type = type
+        self.lookAhead = LA
         self.dot = dot
+        self.type = type
         self.isReduceItem = reduct
 
     def __eq__ (self, other):
-        if (self.production == other.production and self.type == other.type and self.dot == other.dot and self.isReduceItem == other.isReduceItem):
+        equal = False
+        lookaheads = []
+        if (self.production == other.production and self.dot == other.dot and self.type == other.type and self.isReduceItem == other.isReduceItem):
+            for element in self.lookAhead:
+                if (element not in lookaheads):
+                    lookaheads.append(element)
+            for element in other.lookAhead:
+                if (element not in lookaheads):
+                    lookaheads.append(element)
+            for LA in lookaheads:
+                if (LA in self.lookAhead):
+                    if (LA in other.lookAhead):
+                        equal = True
+                    else:
+                        equal = False
+                        break
+                else:
+                    equal = False
+                    break
+        else:
+            equal = False
+        if (equal):
             return True
         else:
             return False
 
     def __hash__(self):
-        return hash((self.production, self.type, self.dot, self.isReduceItem))
+        return hash((self.production, self.dot, self.type, self.isReduceItem))
 
-def create_new_item (production, type, dot, reduct):
-    new_state = lr0Item(production, type, dot, reduct)
+def create_new_item (production, LA, dot, type, reduct):
+    new_state = lr1Item(production, LA, dot, type, reduct)
     return new_state
 
 def print_item(item):
-    print(item.production, item.type, item.dot, item.isReduceItem)
+    print(item.production, item.lookAhead, item.dot, item.type, item.isReduceItem)
 #------------------------------------------------------------------------------
-class lr0State:
+class lr1State:
     name = 0
     item_l = []
     isInitialState = False
@@ -72,7 +95,7 @@ class lr0State:
         self.item_l.append(item)
 
 def create_new_state (name):
-    new_state = lr0State(name)
+    new_state = lr1State(name)
     return new_state
 
 def check_kernel_equality(new_kernel, state_n):
@@ -90,14 +113,37 @@ def apply_closure(state, my_item):
         if (ffc.isNonTerminal(my_item.production[my_item.dot])):
             for production in grammar:
                 if (production[0][0] == my_item.production[my_item.dot]):
-                    if (production[0][3] == "#"):
-                        new_item = create_new_item(production[0], "Closure", 3, "Reduce")
+                    temp_lookAhead_l = []
+                    if (my_item.dot == len(my_item.production)-1):
+                        for element in my_item.lookAhead:
+                            temp_lookAhead_l.append(element)
                     else:
-                        new_item = create_new_item(production[0], "Closure", 3, "Not-Reduce")
+                        p_prog = my_item.dot
+                        while (p_prog+1 <= len(my_item.production)-1):
+                            if (ffc.isTerminal(my_item.production[p_prog+1])):
+                                if (my_item.production[p_prog+1] not in temp_lookAhead_l):
+                                    temp_lookAhead_l.append(my_item.production[p_prog+1])
+                            else:
+                                for nT in non_terminals:
+                                    if (nT.name == my_item.production[p_prog+1]):
+                                        for first_nT in nT.first_l:
+                                            if (first_nT != "#"):
+                                                if (first_nT not in temp_lookAhead_l):
+                                                    temp_lookAhead_l.append(first_nT)
+                                            else:
+                                                if (p_prog+1 == len(my_item.production)-1):
+                                                    for item_clos_LA in my_item.lookAhead:
+                                                        if (item_clos_LA not in temp_lookAhead_l):
+                                                            temp_lookAhead_l.append(item_clos_LA)
+                            p_prog += 1
+                    if (production[0][3] == "#"):
+                        new_item = create_new_item(production[0], temp_lookAhead_l, 3, "Closure", "Reduce")
+                    else:
+                        new_item = create_new_item(production[0], temp_lookAhead_l, 3, "Closure", "Not-Reduce")
                     if (new_item not in state.item_l):
-                        state.add_item(new_item)
-                        if (ffc.isNonTerminal(new_item.production[new_item.dot])):
-                            apply_closure(state, new_item)
+                        state.item_l.append(new_item)
+                    if (ffc.isNonTerminal(new_item.production[new_item.dot])):
+                        apply_closure(state, new_item)
 #------------------------------------------------------------------------------
 class transition:
     name = 0
@@ -119,13 +165,13 @@ def create_new_transition (name, element, s_state, e_state):
 terminal_names = []                                     # strings of terminals
 non_terminal_names = []                                 # just strings
 non_terminals = []                                      # actual non-terminals
-lr0_states = []                                         # array of lr0-states
+lr1_states = []                                         # array of lr0-states
 transitions = []                                        # array of transitions between lr0-states
 state_counter = 0
 transition_counter = 0
 
 # input section
-with open("grammar.txt", 'r') as f:
+with open("utils/grammar.txt", 'r') as f:
     input_file = csv.reader(f)
     grammar = []
     for row in input_file:
@@ -195,13 +241,13 @@ print("---------------------- LR(0)-automa Computation ----------------------")
 initial_state = create_new_state(state_counter)
 state_counter += 1
 initial_state.isInitialState = True
-s_item = create_new_item(a_grammar[0], "Kernel", 3, "Not-Reduce")
+s_item = create_new_item(a_grammar[0], ['$'], 3, "Kernel", "Not-Reduce")
 initial_state.add_item(s_item)
 apply_closure(initial_state, s_item)
-lr0_states.append(initial_state)
+lr1_states.append(initial_state)
 
 # rest of automa computation
-for state in lr0_states:
+for state in lr1_states:
     for i in range(3): # temporary solution to recursive closure applications
         for clos_item in state.item_l:
             apply_closure(state, clos_item)
@@ -217,9 +263,9 @@ for state in lr0_states:
         new_state_items = []
         for item in state.item_l:
             if (item.production[item.dot] == element):
-                new_item = create_new_item(item.production, "Kernel", item.dot+1, "Reduce" if (item.dot+1 == len(item.production)) else "Not-Reduce")
+                new_item = create_new_item(item.production, item.lookAhead, item.dot+1, "Kernel", "Reduce" if (item.dot+1 == len(item.production)) else "Not-Reduce")
                 new_state_items.append(new_item)
-        for state_n in lr0_states:
+        for state_n in lr1_states:
                 if (check_kernel_equality(new_state_items, state_n)):
                     require_new_state = False
                     destination_state = state_n.name
@@ -229,7 +275,7 @@ for state in lr0_states:
         if (require_new_state):
             new_state = create_new_state(state_counter)
             state_counter += 1
-            lr0_states.append(new_state)
+            lr1_states.append(new_state)
             for new_state_item in new_state_items:
                 if (new_state_item not in new_state.item_l):
                     new_state.add_item(new_state_item)
@@ -243,15 +289,15 @@ for state in lr0_states:
             transition_counter += 1
             if (new_transition not in transitions):
                 transitions.append(new_transition)
-'''
-for state in lr0_states:
+
+for state in lr1_states:
     print("\nState " + str(state.name) + ":")
     for element in state.item_l:
-        print(element.production, ",", element.type, ", Dot is on " + str(element.dot), ", " + element.isReduceItem)
+        print(element.production + ",", element.lookAhead, ", " + str(element.dot) + ", " + element.type + ", " + element.isReduceItem)
 for transition in transitions:
     print("\nTransition " + str(transition.name) + ":")
     print(transition.name,  transition.element, transition.starting_state, transition.ending_state)
-'''
+
 # table Computation
 header = []
 for element in terminal_names:
@@ -261,11 +307,11 @@ for element in non_terminal_names:
     if element not in header:
         header.append(element)
 
-slr0_table = PrettyTable(header)
+lr1_table = PrettyTable(header)
 total_lenght = len(non_terminal_names) + len(terminal_names)
 table = [["" for x in range(total_lenght)] for y in range(state_counter)]
 
-# slr0-parsing table computation
+# lr0-parsing table computation
 for idx_row in range(state_counter):
     for idx_col in range(total_lenght):
         if (idx_col == 0):
@@ -288,27 +334,24 @@ for transition in transitions:
         for idx, element in enumerate(header):
             if (element == transition.element):
                 table[transition.starting_state][idx].append(new_entry)
-for state in lr0_states:
+for state in lr1_states:
     for item in state.item_l:
         if (item.production != "Q->S"):
             new_entry = ""
             if (item.isReduceItem == "Reduce"):
-                for non_terminal in non_terminals:
-                    if non_terminal.name == item.production[0]:
-                        nT = non_terminal
                 for idx1, production in enumerate(grammar):
                     if (item.production == production[0]):
                         new_entry = "R" + str(idx1+1)
                 for idx2, element in enumerate(header):
-                    for follow_nT in nT.follow_l:
-                        if (follow_nT == element):
+                    for LA in item.lookAhead:
+                        if (element == LA):
                             table[state.name][idx2].append(new_entry)
 
 for i in range(state_counter):
-    slr0_table.add_row(table[i])
+    lr1_table.add_row(table[i])
 
-print("\nSLR(0) parsing table of the grammar G:")
-print(slr0_table)
+print("\nLR(1) parsing table of the grammar G:")
+print(lr1_table)
 
 #
 #

@@ -15,7 +15,7 @@
 
 import csv
 import numpy
-import first_and_follow_calculation as ffc
+from utils import first_and_follow_calculation as ffc
 from prettytable import PrettyTable
 #------------------------------------------------------------------------------
 class nonTerminal:
@@ -230,7 +230,7 @@ lalr1_state_counter = 0
 lalr1_transition_counter = 0
 
 # input section
-with open("grammar.txt", 'r') as f:
+with open("utils/grammar.txt", 'r') as f:
     input_file = csv.reader(f)
     grammar = []
     for row in input_file:
@@ -470,10 +470,10 @@ for element in non_terminal_names:
 
 lalr1_table = PrettyTable(header)
 total_lenght = len(non_terminal_names) + len(terminal_names)
-table = [["" for x in range(total_lenght)] for y in range(lalr1_state_counter)] #TBM
+table = [["" for x in range(total_lenght)] for y in range(lalr1_state_counter)]
 
 # LALR(1)-parsing table computation
-for idx_row in range(lalr1_state_counter): #TBM
+for idx_row in range(lalr1_state_counter):
     for idx_col in range(total_lenght):
         if (idx_col == 0):
             table[idx_row][idx_col] = lalr1_states[idx_row].name
@@ -512,7 +512,7 @@ for state_idx, state in enumerate(lalr1_states):
                         if (element == LA):
                             table[state_idx][idx2].append(new_entry)
 
-for i in range(lalr1_state_counter): #TBM
+for i in range(lalr1_state_counter):
     lalr1_table.add_row(table[i])
 
 print("\nLALR(1) parsing table of the grammar G:")

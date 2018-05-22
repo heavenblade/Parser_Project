@@ -8,7 +8,7 @@
 
 import csv
 import numpy
-import first_and_follow_calculation as ffc
+from utils import first_and_follow_calculation as ffc
 from prettytable import PrettyTable
 
 class nonTerminal:
@@ -35,7 +35,7 @@ non_terminal_names = []                                 # just strings
 non_terminals = []                                      # actual non-terminals
 
 # input section
-with open("grammar.txt", 'r') as f:
+with open("utils/grammar.txt", 'r') as f:
     input_file = csv.reader(f)
     grammar = []
     for row in input_file:
