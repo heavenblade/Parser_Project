@@ -12,9 +12,10 @@ LL(1)-parser
 LR(0)-parser  
 SLR(0)-parser  
 LR(1)-parser  
+LALR(1)-parser  
 
 Current development:  
-LALR(1)-parser  
+Testing parsers  
 
 Future development:  
 LALR(1)-parser with dynamic lookahead propagation  
