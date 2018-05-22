@@ -15,7 +15,6 @@
 
 import csv
 import numpy
-import sys
 import first_and_follow_calculation as ffc
 from prettytable import PrettyTable
 #------------------------------------------------------------------------------
@@ -450,7 +449,7 @@ for transition in lr1_transitions:
     if (not alreadyIn):
         lalr1_transitions.append(new_transition)
         lalr1_transition_counter += 1
-        
+
 print("\nLALR(1)-states:")
 for state in lalr1_states:
     print("\nState " + str(state.name) + ", idx " + str(state.index) + ":")
