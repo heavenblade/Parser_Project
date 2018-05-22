@@ -30,6 +30,13 @@ S->AB
 A->a  
 B->#  
 
+In order to execute these scripts you will need to install some python libraries. In order to accomplish this, make sure that pip is correctly installed,
+and then execute the following commands on the shell:
+```
+> pip install numpy
+> pip install prettytable
+```
+
 # Usage:
 
 LL(1)-parser:
