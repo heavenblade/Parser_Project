@@ -230,7 +230,7 @@ lalr1_state_counter = 0
 lalr1_transition_counter = 0
 
 # input section
-with open("utils/grammar.txt", 'r') as f:
+with open("utils/grammar.txt", encoding = "utf8", 'r') as f:
     input_file = csv.reader(f)
     grammar = []
     for row in input_file:
