@@ -1,3 +1,4 @@
-S–>AA
-A–>aA
-A–>b
+S->AA
+A->aA
+A->b
+A->#

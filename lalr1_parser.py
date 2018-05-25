@@ -230,7 +230,7 @@ lalr1_state_counter = 0
 lalr1_transition_counter = 0
 
 # input section
-with open("utils/grammar.txt", encoding = "utf8", 'r') as f:
+with open("utils/grammar.txt", 'r', encoding = 'ISO-8859-1') as f:
     input_file = csv.reader(f)
     grammar = []
     for row in input_file:
@@ -294,8 +294,8 @@ a_grammar.append(starting_prod)
 for prod in grammar:
     a_grammar.append(prod[0])
 
-# computation of the LR(1)-automaton
-print("---------------------- LR(0)-automa Computation ----------------------")
+# computation of the LALR(1)-automaton
+print("------------------- LALR(1)-automaton Computation --------------------")
 # starting state
 initial_state = create_new_state(str(lr1_state_counter), lr1_state_counter)
 lr1_state_counter += 1
@@ -450,12 +450,12 @@ for transition in lr1_transitions:
         lalr1_transitions.append(new_transition)
         lalr1_transition_counter += 1
 
-print("\nLALR(1)-states:")
+print("LALR(1)-states:")
 for state in lalr1_states:
-    print("\nState " + str(state.name) + ", idx " + str(state.index) + ":")
+    print("\nState " + str(state.name) + ":")
     for element in state.item_l:
-        print(element.production + ",", element.lookAhead, ", " + str(element.dot) + ", " + element.type + ", " + element.isReduceItem)
-print("\nLALR(1)-transitions")
+        print(element.production + ",", element.lookAhead, ", Dot is on " + str(element.dot) + ", " + element.type + ", " + element.isReduceItem)
+print("\nLALR(1)-transitions:")
 for transition in lalr1_transitions:
     print(transition.name,  transition.element, transition.starting_state, transition.ending_state)
 
