@@ -102,6 +102,7 @@ for idx_row, element in enumerate(non_terminal_names, 0):
             table[idx_row][idx_col] = []
 
 for production in grammar:
+    symbols_checked = []
     p_prog = 3
     if (production[0][p_prog] == '#'):
         for element in non_terminals:
@@ -128,49 +129,88 @@ for production in grammar:
                 terminal_index = idx
         table[driver_index][terminal_index].append(production[0])
     elif (ffc.isNonTerminal(production[0][p_prog])):
-        for element in non_terminals:
-            if (element.name == production[0][p_prog]):
-                nT = element
-                for first_nT in nT.first_l:
-                    if (first_nT != '#'):
-                        driver_index = 0
-                        terminal_index = 0
-                        for idx, element_1 in enumerate(non_terminal_names, 0):
-                            if (element_1 == production[0][0]):
-                                driver_index = idx
-                        for idx, element_2 in enumerate(terminal_names, 0):
-                            if (element_2 == first_nT):
-                                terminal_index = idx
-                        table[driver_index][terminal_index].append(production[0])
-                    else:
-                        while (p_prog < len(production[0])-1):
-                            if (ffc.isTerminal(production[0][p_prog+1])):
+        stopped = False
+        while (p_prog < len(production[0])-1 and not stopped):
+            for nT in non_terminals:
+                if (nT.name == production[0][p_prog]):
+                    if ("#" in nT.first_l):
+                        for first_nT in nT.first_l:
+                            if (first_nT != '#'):
                                 driver_index = 0
                                 terminal_index = 0
-                                for idx, element in enumerate(non_terminal_names, 0):
-                                    if (element == production[0][0]):
+                                for idx, element_1 in enumerate(non_terminal_names, 0):
+                                    if (element_1 == production[0][0]):
                                         driver_index = idx
-                                for idx, element in enumerate(terminal_names, 0):
-                                    if (element == production[0][p_prog+1]):
+                                for idx, element_2 in enumerate(terminal_names, 0):
+                                    if (element_2 == first_nT):
                                         terminal_index = idx
+                                #print("Adding " + production[0] + " to [" + str(driver_index) + "," + str(terminal_index) + "] - 1 watching " + production[0][p_prog])
+                                if (first_nT not in symbols_checked):
+                                    table[driver_index][terminal_index].append(production[0])
+                                    symbols_checked.append(first_nT)
+                        if (ffc.isTerminal(production[0][p_prog+1])):
+                            driver_index = 0
+                            terminal_index = 0
+                            for idx, element in enumerate(non_terminal_names, 0):
+                                if (element == production[0][0]):
+                                    driver_index = idx
+                            for idx, element in enumerate(terminal_names, 0):
+                                if (element == production[0][p_prog+1]):
+                                    terminal_index = idx
+                            #print("Adding " + production[0] + " to [" + str(driver_index) + "," + str(terminal_index) + "] - 2 watching " + production[0][p_prog])
+                            if (production[0][p_prog+1] not in symbols_checked):
                                 table[driver_index][terminal_index].append(production[0])
-                            elif (ffc.isNonTerminal(production[0][p_prog+1])):
-                                for element in non_terminals:
-                                    if (element.name == production[0][p_prog+1]):
-                                        nT = element
-                                        for first_nT in nT.first_l:
-                                            if (first_nT != '#'):
+                                symbols_checked.append(production[0][p_prog+1])
+                            stopped = True
+                        elif (ffc.isNonTerminal(production[0][p_prog+1])):
+                            for nT_ahead in non_terminals:
+                                if (nT_ahead.name == production[0][p_prog+1]):
+                                    if ("#" in nT_ahead.first_l):
+                                        for first_nT_ahead in nT_ahead.first_l:
+                                            if (first_nT_ahead != '#'):
                                                 driver_index = 0
                                                 terminal_index = 0
                                                 for idx, element_1 in enumerate(non_terminal_names, 0):
                                                     if (element_1 == production[0][0]):
                                                         driver_index = idx
                                                 for idx, element_2 in enumerate(terminal_names, 0):
-                                                    if (element_2 == first_nT):
+                                                    if (element_2 == first_nT_ahead):
                                                         terminal_index = idx
+                                                #print("Adding " + production[0] + " to [" + str(driver_index) + "," + str(terminal_index) + "] - 3 watching " + production[0][p_prog])
+                                                if (first_nT_ahead not in symbols_checked):
+                                                    table[driver_index][terminal_index].append(production[0])
+                                                    symbols_checked.append(first_nT_ahead)
+                                        if (p_prog+1 == len(production[0])-1):
+                                            stopped = True
+                                        if (p_prog+2 <= len(production[0])-1):
+                                            p_prog += 1
+                                    else:
+                                        for first_nT_ahead in nT_ahead.first_l:
+                                            driver_index = 0
+                                            terminal_index = 0
+                                            for idx, element_1 in enumerate(non_terminal_names, 0):
+                                                if (element_1 == production[0][0]):
+                                                    driver_index = idx
+                                            for idx, element_2 in enumerate(terminal_names, 0):
+                                                if (element_2 == first_nT_ahead):
+                                                    terminal_index = idx
+                                            #print("Adding " + production[0] + " to [" + str(driver_index) + "," + str(terminal_index) + "] - 4 watching " + production[0][p_prog])
+                                            if (first_nT_ahead not in symbols_checked):
                                                 table[driver_index][terminal_index].append(production[0])
-                            p_prog += 1
-
+                                                symbols_checked.append(first_nT_ahead)
+                                        stopped = True
+                    else:
+                        for first_nT in nT.first_l:
+                            driver_index = 0
+                            terminal_index = 0
+                            for idx, element_1 in enumerate(non_terminal_names, 0):
+                                if (element_1 == production[0][0]):
+                                    driver_index = idx
+                            for idx, element_2 in enumerate(terminal_names, 0):
+                                if (element_2 == first_nT):
+                                    terminal_index = idx
+                            table[driver_index][terminal_index].append(production[0])
+                        stopped = True
 for i in range(len(non_terminal_names)):
     ll1_table.add_row(table[i])
 
