@@ -1,4 +1,4 @@
-# This is a LR(0) parser for grammars. It may not be optimized but it's
+# This is a LR(0)-parser for grammars. It may not be optimized but it's
 # a project i'm conducting in the free time during my university studies.
 #
 # Check readme.txt in order to see input format of the grammar and eventual
@@ -125,7 +125,7 @@ state_counter = 0
 transition_counter = 0
 
 # input section
-with open("utils/grammar.txt", encoding = "utf8", 'r') as f:
+with open("utils/grammar.txt", 'r', encoding = 'ISO-8859-1') as f:
     input_file = csv.reader(f)
     grammar = []
     for row in input_file:
@@ -189,8 +189,8 @@ a_grammar.append(starting_prod)
 for prod in grammar:
     a_grammar.append(prod[0])
 
-# computation of the LR(0) automa
-print("---------------------- LR(0)-automa Computation ----------------------")
+# computation of the LR(0)-automaton
+print("-------------------- LR(0)-automaton Computation ---------------------")
 # starting state
 initial_state = create_new_state(state_counter)
 state_counter += 1
@@ -200,7 +200,7 @@ initial_state.add_item(s_item)
 apply_closure(initial_state, s_item)
 lr0_states.append(initial_state)
 
-# rest of automa computation
+# rest of automaton computation
 for state in lr0_states:
     for i in range(3): # temporary solution to recursive closure applications
         for clos_item in state.item_l:
@@ -243,16 +243,17 @@ for state in lr0_states:
             transition_counter += 1
             if (new_transition not in transitions):
                 transitions.append(new_transition)
-'''
+
+print("LR(0)-states:")
 for state in lr0_states:
     print("\nState " + str(state.name) + ":")
     for element in state.item_l:
-        print(element.production, ",", element.type, ", Dot is on " + str(element.dot), ", " + element.isReduceItem)
+        print(element.production + ",", element.type + ", Dot is on " + str(element.dot) + ", " + element.isReduceItem)
+print("\nLR(0)-transitions:")
 for transition in transitions:
-    print("\nTransition " + str(transition.name) + ":")
     print(transition.name,  transition.element, transition.starting_state, transition.ending_state)
-'''
-# table Computation
+
+# table creation
 header = []
 for element in terminal_names:
     if element not in header:
@@ -265,7 +266,7 @@ lr0_table = PrettyTable(header)
 total_lenght = len(non_terminal_names) + len(terminal_names)
 table = [["" for x in range(total_lenght)] for y in range(state_counter)]
 
-# lr0-parsing table computation
+# LR(0)-parsing table computation
 for idx_row in range(state_counter):
     for idx_col in range(total_lenght):
         if (idx_col == 0):

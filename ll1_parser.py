@@ -35,7 +35,7 @@ non_terminal_names = []                                 # just strings
 non_terminals = []                                      # actual non-terminals
 
 # input section
-with open("utils/grammar.txt", encoding = "utf8", 'r') as f:
+with open("utils/grammar.txt", 'r', encoding = 'ISO-8859-1') as f:
     input_file = csv.reader(f)
     grammar = []
     for row in input_file:
