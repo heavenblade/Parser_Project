@@ -291,19 +291,22 @@ for transition in transitions:
                 table[transition.starting_state][idx].append(new_entry)
 for state in lr0_states:
     for item in state.item_l:
+        found = False
         if (item.production != "Q->S"):
             new_entry = ""
             if (item.isReduceItem == "Reduce"):
                 for non_terminal in non_terminals:
-                    if non_terminal.name == item.production[0]:
+                    if (non_terminal.name == item.production[0]):
                         nT = non_terminal
+                        found = True
                 for idx1, production in enumerate(grammar):
                     if (item.production == production[0]):
                         new_entry = "R" + str(idx1+1)
                 for idx2, element in enumerate(header):
-                    for follow_nT in nT.follow_l:
-                        if (follow_nT == element):
-                            table[state.name][idx2].append(new_entry)
+                    if (found):
+                        for follow_nT in nT.follow_l:
+                            if (follow_nT == element):
+                                table[state.name][idx2].append(new_entry)
 
 for i in range(state_counter):
     slr0_table.add_row(table[i])

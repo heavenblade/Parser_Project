@@ -76,34 +76,39 @@ def compute_follow(nT, production, my_non_terminals, p_prog):
                 if (isTerminal(production[0][p_prog+1])):
                     if (production[0][p_prog+1] not in nT.follow_l):
                         nT.add_follow(production[0][p_prog+1])
-                        #print("Adding '" + production[0][elem+1] + "' to follow(" + nT.name + ") due to rule 2.")
+                        #print("Adding '" + production[0][p_prog+1] + "' to follow(" + nT.name + ") due to rule 2.")
                 else:
                     while (p_prog < len(production[0])-1 and not stopped):
-                        for non_T_ahead in my_non_terminals:
-                            if (non_T_ahead.name == production[0][p_prog+1]):
-                                if ("#" in non_T_ahead.first_l):
-                                    for first_to_add in non_T_ahead.first_l:
-                                        if (first_to_add != "#"):
+                        if (isTerminal(production[0][p_prog+1])):
+                            if (production[0][p_prog+1] not in nT.follow_l):
+                                nT.add_follow(production[0][p_prog+1])
+                            stopped = True
+                        else:
+                            for non_T_ahead in my_non_terminals:
+                                if (non_T_ahead.name == production[0][p_prog+1]):
+                                    if ("#" in non_T_ahead.first_l):
+                                        for first_to_add in non_T_ahead.first_l:
+                                            if (first_to_add != "#"):
+                                                if (first_to_add not in nT.follow_l):
+                                                    nT.add_follow(first_to_add)
+                                                    #print("Adding '" + first_to_add + "' to follow(" + nT.name + ") due to rule 3.1")
+                                        if (p_prog+1 == len(production[0])-1):
+                                            for driver_non_T in my_non_terminals:
+                                                if (driver_non_T.name == production[0][0]):
+                                                    for follow_driver in driver_non_T.follow_l:
+                                                        if (follow_driver not in nT.follow_l):
+                                                            nT.add_follow(follow_driver)
+                                                            #print("Adding '" + follow_driver + "' to follow(" + nT.name + ") due to rule 4")
+                                            stopped = True
+                                        if (p_prog+2 <= len(production[0])-1):
+                                            p_prog += 1
+                                    else:
+                                        for first_to_add in non_T_ahead.first_l:
                                             if (first_to_add not in nT.follow_l):
                                                 nT.add_follow(first_to_add)
-                                                #print("Adding '" + first_to_add + "' to follow(" + nT.name + ") due to rule 3.1")
-                                    if (p_prog+1 == len(production[0])-1):
-                                        for driver_non_T in my_non_terminals:
-                                            if (driver_non_T.name == production[0][0]):
-                                                for follow_driver in driver_non_T.follow_l:
-                                                    if (follow_driver not in nT.follow_l):
-                                                        nT.add_follow(follow_driver)
-                                                        #print("Adding '" + follow_driver + "' to follow(" + nT.name + ") due to rule 4")
+                                                #print("Adding '" + first_to_add + "' to follow(" + nT.name + ") due to rule 3.2")
                                         stopped = True
-                                    if (p_prog+2 <= len(production[0])-1):
-                                        p_prog += 1
-                                else:
-                                    for first_to_add in non_T_ahead.first_l:
-                                        if (first_to_add not in nT.follow_l):
-                                            nT.add_follow(first_to_add)
-                                            #print("Adding '" + first_to_add + "' to follow(" + nT.name + ") due to rule 3.2")
-                                    stopped = True
-                                    break
+                                        break
         else:
             if (isNonTerminal(production[0][p_prog])):
                 for element in my_non_terminals:
