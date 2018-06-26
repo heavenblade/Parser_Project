@@ -124,6 +124,15 @@ def compute_follow(nT, production, my_non_terminals, p_prog):
         if (p_prog < len(production[0])-1):
             compute_follow(nT, production, my_non_terminals, p_prog+1)
 
+def verify_grammar(table, rows, columns):
+    found_mult_def = False
+    for row in range(rows):
+        for column in range(columns):
+            if (column != 0):
+                if (len(table[row][column]) > 1):
+                    #print(table[row][column])
+                    found_mult_def = True
+    return found_mult_def
 #
 #
 #
