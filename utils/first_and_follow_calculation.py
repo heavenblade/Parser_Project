@@ -69,6 +69,15 @@ def compute_follow(nT, production, my_non_terminals, p_prog):
             nT.add_follow('$')
 
     #print("Analyzing the production '" + production[0] + "' in the computation of follow(" + nT.name + ")..")
+
+    if (production[0][-1] == nT.name):
+        for non_T in my_non_terminals:
+            if (production[0][0] == non_T.name):
+                for follow_d in non_T.follow_l:
+                    if (follow_d not in nT.follow_l):
+                        nT.follow_l.append(follow_d)
+                        #print("Adding '" + follow_d + "' to follow(" + production[0][-1] + ") due to rule 1.")
+
     if (nT.name == production[0][p_prog]):
         stopped = False
         if (len(production[0]) > 4 and p_prog < len(production[0])-1):
