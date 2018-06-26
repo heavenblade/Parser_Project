@@ -314,6 +314,11 @@ for i in range(state_counter):
 print("\nSLR(0) parsing table of the grammar G:")
 print(slr0_table)
 
+if (ffc.verify_grammar(table, state_counter, total_lenght)):
+    print("\nThe grammar G is not SLR(0).")
+else:
+    print("\nThe grammar G is SLR(0).")
+
 #
 #
 #

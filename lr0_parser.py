@@ -307,6 +307,11 @@ for i in range(state_counter):
 print("\nLR(0) parsing table of the grammar G:")
 print(lr0_table)
 
+if (ffc.verify_grammar(table, state_counter, total_lenght)):
+    print("\nThe grammar G is not LR(0).")
+else:
+    print("\nThe grammar G is LR(0).")
+
 #
 #
 #

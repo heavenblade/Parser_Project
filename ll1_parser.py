@@ -91,7 +91,6 @@ for element in non_terminals:
 
 # table Computation
 ll1_table = PrettyTable(terminal_names)
-
 table = [["" for x in range(len(terminal_names))] for y in range(len(non_terminal_names))]
 
 for idx_row, element in enumerate(non_terminal_names, 0):
@@ -217,6 +216,11 @@ for i in range(len(non_terminal_names)):
 
 print("\nLL(1) parsing table of the grammar G:")
 print(ll1_table)
+
+if (ffc.verify_grammar(table, len(non_terminal_names), len(terminal_names))):
+    print("\nThe grammar G is not LL(1).")
+else:
+    print("\nThe grammar G is LL(1).")
 
 #
 #
