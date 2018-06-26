@@ -356,6 +356,11 @@ for i in range(state_counter):
 print("\nLR(1) parsing table of the grammar G:")
 print(lr1_table)
 
+if (ffc.verify_grammar(table, state_counter, total_lenght)):
+    print("\nThe grammar G is not LR(1).")
+else:
+    print("\nThe grammar G is LR(1).")
+
 #
 #
 #
