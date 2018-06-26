@@ -101,6 +101,7 @@ for idx_row, element in enumerate(non_terminal_names, 0):
         else:
             table[idx_row][idx_col] = []
 
+
 for production in grammar:
     symbols_checked = []
     p_prog = 3
