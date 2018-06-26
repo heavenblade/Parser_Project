@@ -119,10 +119,12 @@ def apply_closure(state, my_item):
                             temp_lookAhead_l.append(element)
                     else:
                         p_prog = my_item.dot
-                        while (p_prog+1 <= len(my_item.production)-1):
+                        stopped = False
+                        while (p_prog+1 <= len(my_item.production)-1 and not stopped):
                             if (ffc.isTerminal(my_item.production[p_prog+1])):
                                 if (my_item.production[p_prog+1] not in temp_lookAhead_l):
                                     temp_lookAhead_l.append(my_item.production[p_prog+1])
+                                    stopped = True
                             else:
                                 for nT in non_terminals:
                                     if (nT.name == my_item.production[p_prog+1]):

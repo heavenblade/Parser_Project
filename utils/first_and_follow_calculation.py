@@ -77,6 +77,7 @@ def compute_follow(nT, production, my_non_terminals, p_prog):
                     if (production[0][p_prog+1] not in nT.follow_l):
                         nT.add_follow(production[0][p_prog+1])
                         #print("Adding '" + production[0][p_prog+1] + "' to follow(" + nT.name + ") due to rule 2.")
+                        compute_follow(nT, production, my_non_terminals, p_prog+1)
                 else:
                     while (p_prog < len(production[0])-1 and not stopped):
                         if (isTerminal(production[0][p_prog+1])):
