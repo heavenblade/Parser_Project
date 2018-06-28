@@ -251,7 +251,7 @@ for index in range(len(grammar)):
 terminal_names.append(" ")
 for production in grammar:
     for index in range(len(production[0])):
-        if (production[0][index] != '#' and production[0][index] != '-' and production[0][index] != '>'):
+        if (production[0][index] != '#' and index >= 3):
             if (ffc.isTerminal(production[0][index])):
                 if (production[0][index] not in terminal_names):
                     terminal_names.append(production[0][index])
@@ -323,10 +323,11 @@ for state in lr1_states:
         destination_state = 0
         new_state_items = []
         for item in state.item_l:
-            if (item.production[item.dot] == element):
-                new_item = create_new_item(item.production, item.dot+1, "Kernel", "Reduce" if (item.dot+1 == len(item.production)) else "Not-Reduce")
-                set_lookaheads(new_item, item.lookAhead)
-                new_state_items.append(new_item)
+            if (item.isReduceItem != "Reduce"):
+                if (item.production[item.dot] == element):
+                    new_item = create_new_item(item.production, item.dot+1, "Kernel", "Reduce" if (item.dot+1 == len(item.production)) else "Not-Reduce")
+                    set_lookaheads(new_item, item.lookAhead)
+                    new_state_items.append(new_item)
         for state_n in lr1_states:
                 if (check_kernel_equality(new_state_items, state_n)):
                     require_new_state = False
@@ -512,7 +513,8 @@ for state_idx, state in enumerate(lalr1_states):
                 for idx2, element in enumerate(header):
                     for LA in item.lookAhead:
                         if (element == LA):
-                            table[state_idx][idx2].append(new_entry)
+                            if (len(new_entry) > 0):
+                                table[state_idx][idx2].append(new_entry)
 
 for i in range(lalr1_state_counter):
     lalr1_table.add_row(table[i])
