@@ -55,7 +55,7 @@ for index in range(len(grammar)):
 terminal_names.append(" ")
 for production in grammar:
     for index in range(len(production[0])):
-        if (production[0][index] != '#' and production[0][index] != '-' and production[0][index] != '>'):
+        if (production[0][index] != '#' and index >= 3):
             if (ffc.isTerminal(production[0][index])):
                 if (production[0][index] not in terminal_names):
                     terminal_names.append(production[0][index])
@@ -99,7 +99,6 @@ for idx_row, element in enumerate(non_terminal_names, 0):
             table[idx_row][idx_col] = element
         else:
             table[idx_row][idx_col] = []
-
 
 for production in grammar:
     symbols_checked = []
@@ -209,8 +208,8 @@ for production in grammar:
                             for idx, element_2 in enumerate(terminal_names, 0):
                                 if (element_2 == first_nT):
                                     terminal_index = idx
-                            table[driver_index][terminal_index].append(production[0])
                             #print("Adding " + production[0] + " to [" + str(driver_index) + "," + str(terminal_index) + "] - 5 watching " + production[0][p_prog])
+                            table[driver_index][terminal_index].append(production[0])
                         stopped = True
 for i in range(len(non_terminal_names)):
     ll1_table.add_row(table[i])

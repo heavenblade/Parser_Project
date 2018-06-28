@@ -144,7 +144,7 @@ for index in range(len(grammar)):
 terminal_names.append(" ")
 for production in grammar:
     for index in range(len(production[0])):
-        if (production[0][index] != '#' and production[0][index] != '-' and production[0][index] != '>'):
+        if (production[0][index] != '#' and index >= 3):
             if (ffc.isTerminal(production[0][index])):
                 if (production[0][index] not in terminal_names):
                     terminal_names.append(production[0][index])
@@ -307,7 +307,8 @@ for state in lr0_states:
                     if (found):
                         for follow_nT in nT.follow_l:
                             if (follow_nT == element):
-                                table[state.name][idx2].append(new_entry)
+                                if (len(new_entry) > 0):
+                                    table[state.name][idx2].append(new_entry)
 
 for i in range(state_counter):
     slr0_table.add_row(table[i])

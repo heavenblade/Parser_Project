@@ -144,7 +144,7 @@ for index in range(len(grammar)):
 terminal_names.append(" ")
 for production in grammar:
     for index in range(len(production[0])):
-        if (production[0][index] != '#' and production[0][index] != '-' and production[0][index] != '>'):
+        if (production[0][index] != '#' and index >= 3):
             if (ffc.isTerminal(production[0][index])):
                 if (production[0][index] not in terminal_names):
                     terminal_names.append(production[0][index])
@@ -300,7 +300,8 @@ for state in lr0_states:
                         new_entry = "R" + str(idx1+1)
                 for idx2, element in enumerate(header):
                     if (ffc.isTerminal(element) or element == "$"):
-                        table[state.name][idx2].append(new_entry)
+                        if (len(new_entry) > 0):
+                            table[state.name][idx2].append(new_entry)
 
 for i in range(state_counter):
     lr0_table.add_row(table[i])
