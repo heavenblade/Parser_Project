@@ -216,9 +216,10 @@ for state in lr0_states:
         destination_state = 0
         new_state_items = []
         for item in state.item_l:
-            if (item.production[item.dot] == element):
-                new_item = create_new_item(item.production, "Kernel", item.dot+1, "Reduce" if (item.dot+1 == len(item.production)) else "Not-Reduce")
-                new_state_items.append(new_item)
+            if (item.isReduceItem != "Reduce"):
+                if (item.production[item.dot] == element):
+                    new_item = create_new_item(item.production, "Kernel", item.dot+1, "Reduce" if (item.dot+1 == len(item.production)) else "Not-Reduce")
+                    new_state_items.append(new_item)
         for state_n in lr0_states:
                 if (check_kernel_equality(new_state_items, state_n)):
                     require_new_state = False

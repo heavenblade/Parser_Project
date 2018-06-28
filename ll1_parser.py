@@ -130,7 +130,7 @@ for production in grammar:
         table[driver_index][terminal_index].append(production[0])
     elif (ffc.isNonTerminal(production[0][p_prog])):
         stopped = False
-        while (p_prog < len(production[0])-1 and not stopped):
+        while (p_prog <= len(production[0])-1 and not stopped):
             for nT in non_terminals:
                 if (nT.name == production[0][p_prog]):
                     if ("#" in nT.first_l):
@@ -210,6 +210,7 @@ for production in grammar:
                                 if (element_2 == first_nT):
                                     terminal_index = idx
                             table[driver_index][terminal_index].append(production[0])
+                            #print("Adding " + production[0] + " to [" + str(driver_index) + "," + str(terminal_index) + "] - 5 watching " + production[0][p_prog])
                         stopped = True
 for i in range(len(non_terminal_names)):
     ll1_table.add_row(table[i])
