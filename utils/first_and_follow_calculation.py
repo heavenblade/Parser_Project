@@ -9,15 +9,21 @@
 
 # functions declaration
 def isTerminal(element):
-    if (element == element.upper()):
+    isSymbol = False
+    if (element == "(" or element == ")" or element == "*" or element == "+" or element == "." or element == "-" or element == "[" or element == "]" or element == "<" or element == ">" or element == "=" or element == "^" or element == "{" or element == "}" or element == "|"):
+        isSymbol = True
+    if (element == element.upper() and not isSymbol):
         return False
-    else:
+    elif (element == element.lower() or isSymbol):
         return True
 
 def isNonTerminal(element):
-    if (element == element.upper()):
+    isSymbol = False
+    if (element == "(" or element == ")" or element == "*" or element == "+" or element == "." or element == "-" or element == "[" or element == "]" or element == "<" or element == ">" or element == "=" or element == "^" or element == "{" or element == "}" or element == "|"):
+        isSymbol = True
+    if (element == element.upper() and not isSymbol):
         return True
-    else:
+    elif (element == element.lower() or isSymbol):
         return False
 
 def identify_non_T(non_terminals, nT):
