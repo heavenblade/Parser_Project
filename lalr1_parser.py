@@ -1,13 +1,12 @@
-# This is a LALR(1) parser for grammars. This version is based on the LR(1)-automaton
+# LALR(1) parser for grammars. This version is based on the LR(1)-automaton
 # states merging. If the states share the same LR(0)-items they get merged in a
 # unique state with the lookaheads merged together. The future implementation will be
 # based on the recursive equatios algorithm invented by Paola Quaglia. The process
 # follows the base LR(0)-automaton construction, while at the same time keeping track
 # of a set of recursive equations containing the lookaheads. At the end of the
-# LR(0)-automaton computation, the recursive equations get solved and the resulting
-# automaton is a LALR(1)-automaton as it was created through LR(1)-automaton state
-# merging.
-#
+# LR(0)-automaton computation, the recursive equations get solved, the lookahead lists
+# get populated and the resulting automaton is a LALR(1)-automaton as it was created
+# through LR(1)-automaton state merging.
 # Check readme.txt in order to see input format of the grammar and eventual
 # output format.
 #
@@ -190,8 +189,8 @@ def apply_closure(state, my_item):
                         set_lookaheads(new_item, temp_lookAhead_l)
                     if (new_item not in state.item_l):
                         state.item_l.append(new_item)
-                    if (ffc.isNonTerminal(new_item.production[new_item.dot])):
-                        apply_closure(state, new_item)
+                        if (ffc.isNonTerminal(new_item.production[new_item.dot])):
+                            apply_closure(state, new_item)
 #------------------------------------------------------------------------------
 class lr1transition:
     name = 0
@@ -222,11 +221,11 @@ def print_transition(transition):
 terminal_names = []                                     # strings of terminals
 non_terminal_names = []                                 # just strings
 non_terminals = []                                      # actual non-terminals
-lr1_states = []                                         # array that will contain the LR(1)-automaton
+lr1_states = []                                         # array that will contain the LR(1)-automaton states
 lr1_transitions = []                                    # array of transitions between the LR(1)-automaton states
 lr1_state_counter = 0
 lr1_transition_counter = 0
-lalr1_states = []                                       # array that will contain the LALR(1)-automaton
+lalr1_states = []                                       # array that will contain the LALR(1)-automaton states
 lalr1_transitions = []                                  # array of transitions between the LALR(1)-automaton states
 lalr1_state_counter = 0
 lalr1_transition_counter = 0
