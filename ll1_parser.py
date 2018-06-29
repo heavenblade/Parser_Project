@@ -1,6 +1,4 @@
-# This is a LL(1) parser for grammars. It may not be optimized but it's
-# a project i'm conducting in the free time during my university studies.
-#
+# LL(1) parser for grammars.
 # Check readme.txt in order to see input format of the grammar and eventual
 # output format.
 #
@@ -102,6 +100,7 @@ for idx_row, element in enumerate(non_terminal_names, 0):
 
 for production in grammar:
     symbols_checked = []
+    derives_eps_check = 0
     p_prog = 3
     if (production[0][p_prog] == '#'):
         for element in non_terminals:
@@ -133,6 +132,8 @@ for production in grammar:
             for nT in non_terminals:
                 if (nT.name == production[0][p_prog]):
                     if ("#" in nT.first_l):
+                        #print(nT.name, derives_eps_check, derives_eps_check+1)
+                        derives_eps_check += 1
                         for first_nT in nT.first_l:
                             if (first_nT != '#'):
                                 driver_index = 0
@@ -165,6 +166,8 @@ for production in grammar:
                             for nT_ahead in non_terminals:
                                 if (nT_ahead.name == production[0][p_prog+1]):
                                     if ("#" in nT_ahead.first_l):
+                                        #print(nT_ahead.name, derives_eps_check, derives_eps_check+1)
+                                        derives_eps_check += 1
                                         for first_nT_ahead in nT_ahead.first_l:
                                             if (first_nT_ahead != '#'):
                                                 driver_index = 0
@@ -181,6 +184,20 @@ for production in grammar:
                                                     symbols_checked.append(first_nT_ahead)
                                         if (p_prog+1 == len(production[0])-1):
                                             stopped = True
+                                            if (derives_eps_check + 3 == len(production[0])):
+                                                for driver_non_T in non_terminals:
+                                                    if (production[0][0] == driver_non_T.name):
+                                                        for follow_driver_non_T in driver_non_T.follow_l:
+                                                            driver_index = 0
+                                                            terminal_index = 0
+                                                            for idx, element_1 in enumerate(non_terminal_names, 0):
+                                                                if (element_1 == production[0][0]):
+                                                                    driver_index = idx
+                                                            for idx, element_2 in enumerate(terminal_names, 0):
+                                                                if (element_2 == follow_driver_non_T):
+                                                                    terminal_index = idx
+                                                            #print("Adding " + production[0] + " to [" + str(driver_index) + "," + str(terminal_index) + "] - 4 watching " + production[0][p_prog])
+                                                            table[driver_index][terminal_index].append(production[0])
                                         if (p_prog+2 <= len(production[0])-1):
                                             p_prog += 1
                                     else:
@@ -193,7 +210,7 @@ for production in grammar:
                                             for idx, element_2 in enumerate(terminal_names, 0):
                                                 if (element_2 == first_nT_ahead):
                                                     terminal_index = idx
-                                            #print("Adding " + production[0] + " to [" + str(driver_index) + "," + str(terminal_index) + "] - 4 watching " + production[0][p_prog])
+                                            #print("Adding " + production[0] + " to [" + str(driver_index) + "," + str(terminal_index) + "] - 5 watching " + production[0][p_prog])
                                             if (first_nT_ahead not in symbols_checked):
                                                 table[driver_index][terminal_index].append(production[0])
                                                 symbols_checked.append(first_nT_ahead)
@@ -208,7 +225,7 @@ for production in grammar:
                             for idx, element_2 in enumerate(terminal_names, 0):
                                 if (element_2 == first_nT):
                                     terminal_index = idx
-                            #print("Adding " + production[0] + " to [" + str(driver_index) + "," + str(terminal_index) + "] - 5 watching " + production[0][p_prog])
+                            #print("Adding " + production[0] + " to [" + str(driver_index) + "," + str(terminal_index) + "] - 6 watching " + production[0][p_prog])
                             table[driver_index][terminal_index].append(production[0])
                         stopped = True
 for i in range(len(non_terminal_names)):
