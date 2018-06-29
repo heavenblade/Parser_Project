@@ -1,9 +1,9 @@
-# This is a utility file that contains primitives to verify if an element
-# is a terminal or a non-terminal, a primitive to identify a non-terminal
-# in order to access its first and follow lists, and the two main functions
-# that compute first and follow of a given non-terminal.
-#
-# Check readme.md for details.
+# This is a utility file that contains functions to verify if an element
+# is a terminal or a non-terminal, the two main functions that compute first
+# and follow of a given non-terminal and the final check to verify if the table
+# contains any multiply defined entry.
+# Check readme.md in order to see input format of the grammar and eventual
+# output format.
 #
 # Author: Matteo Amatori
 
