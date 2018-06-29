@@ -1,6 +1,4 @@
-# This is a SLR(0)-parser for grammars. It may not be optimized but it's
-# a project i'm conducting in the free time during my university studies.
-#
+# SLR(0)-parser for grammars.
 # Check readme.txt in order to see input format of the grammar and eventual
 # output format.
 #
@@ -119,8 +117,8 @@ def create_new_transition (name, element, s_state, e_state):
 terminal_names = []                                     # strings of terminals
 non_terminal_names = []                                 # just strings
 non_terminals = []                                      # actual non-terminals
-lr0_states = []                                         # array of lr0-states
-transitions = []                                        # array of transitions between lr0-states
+lr0_states = []                                         # array of LR(0)-states
+transitions = []                                        # array of transitions between LR(0)-states
 state_counter = 0
 transition_counter = 0
 
