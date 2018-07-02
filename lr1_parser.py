@@ -161,10 +161,13 @@ def apply_closure(state, my_item, recursion):
                                                         if (item_clos_LA not in temp_lookAhead_l):
                                                             temp_lookAhead_l.append(item_clos_LA)
                             p_prog += 1
+                    temp_type = ""
                     if (production[0][3] == "#"):
                         new_temp_item = create_new_lr0_item(production[0], 3, "Closure", "Reduce")
+                        temp_type = "Reduce"
                     else:
                         new_temp_item = create_new_lr0_item(production[0], 3, "Closure", "Not-Reduce")
+                        temp_type = "Not-Reduce"
                     found = False
                     for item_for_la_merge in state.item_l:
                         temp_item = create_new_lr0_item(item_for_la_merge.production, item_for_la_merge.dot, item_for_la_merge.type, item_for_la_merge.isReduceItem)
@@ -172,15 +175,15 @@ def apply_closure(state, my_item, recursion):
                             for la_to_merge in temp_lookAhead_l:
                                 if (la_to_merge not in item_for_la_merge.lookAhead):
                                     item_for_la_merge.lookAhead.append(la_to_merge)
-                                    found = True
+                            found = True
                     if (not found):
-                        new_item = create_new_lr1_item(production[0], temp_lookAhead_l, 3, "Closure", "Not-Reduce")
+                        new_item = create_new_lr1_item(production[0], temp_lookAhead_l, 3, "Closure", temp_type)
                         if (new_item not in state.item_l):
                             state.item_l.append(new_item)
-                            print("Adding " + new_item.production + " to state " + str(state.name))
+                            #print("Adding " + new_item.production + " to state " + str(state.name))
                             if (recursion < 2):
                                 if (ffc.isNonTerminal(new_item.production[new_item.dot])):
-                                    print("recurring for " + new_item.production, recursion)
+                                    #print("recurring for " + new_item.production, recursion)
                                     apply_closure(state, new_item, recursion+1)
 #------------------------------------------------------------------------------
 class transition:
@@ -376,7 +379,7 @@ for transition in transitions:
                 table[transition.starting_state][idx].append(new_entry)
 for state in lr1_states:
     for item in state.item_l:
-        if (item.production != "Q->S"):
+        if ("Q->" not in item.production):
             new_entry = ""
             if (item.isReduceItem == "Reduce"):
                 for idx1, production in enumerate(grammar):

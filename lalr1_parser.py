@@ -104,7 +104,7 @@ class lr1Item:
     def __hash__(self):
         return hash((self.production, self.dot, self.type, self.isReduceItem))
 
-def create_new_item (production, dot, type, reduct):
+def create_new_lr1_item (production, dot, type, reduct):
     new_item = lr1Item(production, dot, type, reduct)
     return new_item
 
@@ -151,7 +151,7 @@ def check_states_equality_for_merge(set_1, set_2):
     else:
         return False
 
-def apply_closure(state, my_item):
+def apply_closure(state, my_item, recursion):
     if (my_item.isReduceItem == "Not-Reduce"):
         if (ffc.isNonTerminal(my_item.production[my_item.dot])):
             for production in grammar:
@@ -181,16 +181,31 @@ def apply_closure(state, my_item):
                                                         if (item_clos_LA not in temp_lookAhead_l):
                                                             temp_lookAhead_l.append(item_clos_LA)
                             p_prog += 1
+                    temp_type = ""
                     if (production[0][3] == "#"):
-                        new_item = create_new_item(production[0], 3, "Closure", "Reduce")
-                        set_lookaheads(new_item, temp_lookAhead_l)
+                        new_temp_item = create_new_lr0_item(production[0], 3, "Closure", "Reduce")
+                        temp_type = "Reduce"
                     else:
-                        new_item = create_new_item(production[0], 3, "Closure", "Not-Reduce")
+                        new_temp_item = create_new_lr0_item(production[0], 3, "Closure", "Not-Reduce")
+                        temp_type = "Not-Reduce"
+                    found = False
+                    for item_for_la_merge in state.item_l:
+                        temp_item = create_new_lr0_item(item_for_la_merge.production, item_for_la_merge.dot, item_for_la_merge.type, item_for_la_merge.isReduceItem)
+                        if (temp_item == new_temp_item):
+                            for la_to_merge in temp_lookAhead_l:
+                                if (la_to_merge not in item_for_la_merge.lookAhead):
+                                    item_for_la_merge.lookAhead.append(la_to_merge)
+                            found = True
+                    if (not found):
+                        new_item = create_new_lr1_item(production[0], 3, "Closure", temp_type)
                         set_lookaheads(new_item, temp_lookAhead_l)
-                    if (new_item not in state.item_l):
-                        state.item_l.append(new_item)
-                        if (ffc.isNonTerminal(new_item.production[new_item.dot])):
-                            apply_closure(state, new_item)
+                        if (new_item not in state.item_l):
+                            state.item_l.append(new_item)
+                            #print("Adding " + new_item.production + " to state " + str(state.name))
+                            if (recursion < 2):
+                                if (ffc.isNonTerminal(new_item.production[new_item.dot])):
+                                    #print("recurring for " + new_item.production, recursion)
+                                    apply_closure(state, new_item, recursion+1)
 #------------------------------------------------------------------------------
 class lr1transition:
     name = 0
@@ -301,17 +316,17 @@ print("------------------- LALR(1)-automaton Computation --------------------")
 initial_state = create_new_state(str(lr1_state_counter), lr1_state_counter)
 lr1_state_counter += 1
 initial_state.isInitialState = True
-s_item = create_new_item(a_grammar[0], 3, "Kernel", "Not-Reduce")
+s_item = create_new_lr1_item(a_grammar[0], 3, "Kernel", "Not-Reduce")
 set_lookaheads(s_item, ['$'])
 initial_state.add_item(s_item)
-apply_closure(initial_state, s_item)
+apply_closure(initial_state, s_item, 0)
 lr1_states.append(initial_state)
 
 # rest of automaton computation
 for state in lr1_states:
     for i in range(3): # temporary solution to recursive closure applications
         for clos_item in state.item_l:
-            apply_closure(state, clos_item)
+            apply_closure(state, clos_item, 0)
     new_symb_transitions = []
     for item in state.item_l:
         if (item.isReduceItem == "Not-Reduce"):
@@ -324,7 +339,7 @@ for state in lr1_states:
         for item in state.item_l:
             if (item.isReduceItem != "Reduce"):
                 if (item.production[item.dot] == element):
-                    new_item = create_new_item(item.production, item.dot+1, "Kernel", "Reduce" if (item.dot+1 == len(item.production)) else "Not-Reduce")
+                    new_item = create_new_lr1_item(item.production, item.dot+1, "Kernel", "Reduce" if (item.dot+1 == len(item.production)) else "Not-Reduce")
                     set_lookaheads(new_item, item.lookAhead)
                     new_state_items.append(new_item)
         for state_n in lr1_states:
@@ -341,7 +356,7 @@ for state in lr1_states:
             for new_state_item in new_state_items:
                 if (new_state_item not in new_state.item_l):
                     new_state.add_item(new_state_item)
-                apply_closure(new_state, new_state_item)
+                apply_closure(new_state, new_state_item, 0)
             new_transition = create_new_transition(lr1_transition_counter, element, state.index, new_state.index)
             lr1_transition_counter += 1
             if (new_transition not in lr1_transitions):
@@ -391,7 +406,7 @@ for state in lr1_states:
                                 if (LA_2 not in item_1.lookAhead):
                                     #print("adding "+LA_2+" to "+item_1.production)
                                     temp_lookaheads.append(LA_2)
-                    new_item = create_new_item(item_1.production, item_1.dot, item_1.type, item_1.isReduceItem)
+                    new_item = create_new_lr1_item(item_1.production, item_1.dot, item_1.type, item_1.isReduceItem)
                     set_lookaheads(new_item, temp_lookaheads)
                     new_state.add_item(new_item)
                 check_merge_matrix[state.index][state_check.index] = 1
@@ -503,7 +518,7 @@ for transition in lalr1_transitions:
                         table[state.index][idx].append(new_entry)
 for state_idx, state in enumerate(lalr1_states):
     for item in state.item_l:
-        if (item.production != "Q->S"):
+        if ("Q->" not in item.production):
             new_entry = ""
             if (item.isReduceItem == "Reduce"):
                 for idx1, production in enumerate(grammar):
