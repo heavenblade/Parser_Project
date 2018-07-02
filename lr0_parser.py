@@ -290,7 +290,7 @@ for transition in transitions:
                 table[transition.starting_state][idx].append(new_entry)
 for state in lr0_states:
     for item in state.item_l:
-        if (item.production != "Q->S"):
+        if ("Q->" not in item.production):
             new_entry = ""
             if (item.isReduceItem == "Reduce"):
                 for idx1, production in enumerate(grammar):
