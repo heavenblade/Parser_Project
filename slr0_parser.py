@@ -291,7 +291,7 @@ for transition in transitions:
 for state in lr0_states:
     for item in state.item_l:
         found = False
-        if (item.production != "Q->S"):
+        if ("Q->" not in item.production):
             new_entry = ""
             if (item.isReduceItem == "Reduce"):
                 for non_terminal in non_terminals:
