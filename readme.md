@@ -16,9 +16,9 @@ LALR(1)-parser
 
 Current development:  
 Testing parsers  
+LALR(1)-parser with symbolic lookaheads algorithm  
 
 Future development:  
-LALR(1)-parser with dynamic lookahead propagation  
 Strings parsing  
 Django web service for all the parsers above  
 
