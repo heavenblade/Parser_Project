@@ -288,14 +288,29 @@ initial_lookahead = create_new_rec_equation(rec_eq_name)
 rec_equations_counter += 1
 initial_lookahead.symbol_list.append("$")
 
-temp_list = ["a", "b"]
-print(initial_lookahead, initial_lookahead.symbol_list)
-another_rec_eq = create_new_rec_equation(rec_eq_name)
-rec_equations_counter += 1
-another_rec_eq.symbol_list.append(temp_list)
-initial_lookahead.symbol_list.append(another_rec_eq)
-print(initial_lookahead, initial_lookahead.symbol_list)
 
+######## solution for solving recursive equations #########
+another_rec_eq_1 = create_new_rec_equation(rec_eq_name)
+rec_equations_counter += 1
+another_rec_eq_1.symbol_list.append("$")
+temp_list = ["a", "b"]
+print(another_rec_eq_1, another_rec_eq_1.symbol_list)
+another_rec_eq_2 = create_new_rec_equation(rec_eq_name)
+rec_equations_counter += 1
+for elem in temp_list:
+    another_rec_eq_2.symbol_list.append(elem)
+another_rec_eq_1.symbol_list.append(another_rec_eq_2)
+print(another_rec_eq_1, another_rec_eq_1.symbol_list)
+
+for element in another_rec_eq_1.symbol_list:
+    if (not isinstance(element, str)):
+        another_rec_eq_1.symbol_list.remove(element)
+        for symbol in element.symbol_list:
+            if (symbol not in another_rec_eq_1.symbol_list):
+                another_rec_eq_1.symbol_list.append(symbol)
+
+print(another_rec_eq_1, another_rec_eq_1.symbol_list, "\n")
+#############################################################
 
 add_rec_equation(s_item, initial_lookahead)
 initial_state.add_item(s_item)
@@ -351,7 +366,7 @@ print("LALR(1)-states:")
 for state in lr0_states:
     print("\nState " + str(state.name) + ":")
     for element in state.item_l:
-        print(element.production + ",", element.type + ", Dot is on " + str(element.dot) + ", " + element.isReduceItem)
+        print(element.production + ",", element.type + ", Dot is on " + str(element.dot) + ", " + element.isReduceItem, element.set_of_rec_equations)
 print("\nLALR(1)-transitions:")
 for transition in transitions:
     print(transition.name,  transition.element, transition.starting_state, transition.ending_state)
