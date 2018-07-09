@@ -50,9 +50,11 @@ class recursiveEquation:
     def __str__ (self):
         return str(self.name)
 
-def create_new_rec_equation (name):
-        new_equation = recursiveEquation(name)
-        return new_equation
+def create_new_rec_equation (rec_equations_counter):
+    rec_eq_name = "x"+str(rec_equations_counter)
+    new_equation = recursiveEquation(rec_eq_name)
+    rec_equations_counter += 1
+    return new_equation
 
 def add_symbol (self, element):
         self.symbol_list.append(element)
@@ -64,10 +66,10 @@ class lr0Item:
     isReduceItem = False
     set_of_rec_equations = []
 
-    def __init__ (self, production, type, dot, reduct):
+    def __init__ (self, production, dot, type, reduct):
         self.production = production
-        self.type = type
         self.dot = dot
+        self.type = type
         self.isReduceItem = reduct
         self.set_of_rec_equations = []
 
@@ -80,9 +82,9 @@ class lr0Item:
     def __hash__(self):
         return hash((self.production, self.type, self.dot, self.isReduceItem))
 
-def create_new_lr0_item (production, type, dot, reduct):
-    new_state = lr0Item(production, type, dot, reduct)
-    return new_state
+def create_new_lr0_item (production, dot, type, reduct):
+    new_item = lr0Item(production, dot, type, reduct)
+    return new_item
 
 def print_item (item):
     print(item.production, item.type, item.dot, item.isReduceItem)
@@ -171,19 +173,66 @@ def check_kernel_equality (new_kernel, state_n):
     else:
         return False
 
-def apply_closure (state, my_item):
+def apply_closure (state, my_item, recursion, rec_equations_counter):
     if (my_item.isReduceItem == "Not-Reduce"):
         if (ffc.isNonTerminal(my_item.production[my_item.dot])):
             for production in grammar:
                 if (production[0][0] == my_item.production[my_item.dot]):
-                    if (production[0][3] == "#"):
-                        new_item = create_new_lr0_item(production[0], "Closure", 3, "Reduce")
+                    temp_lookAhead_l = []
+                    if (my_item.dot == len(my_item.production)-1):
+                        for element in my_item.set_of_rec_equations:
+                            if (element not in temp_lookAhead_l):
+                                temp_lookAhead_l.append(element)
                     else:
-                        new_item = create_new_lr0_item(production[0], "Closure", 3, "Not-Reduce")
-                    if (new_item not in state.item_l):
-                        state.add_item(new_item)
-                        if (ffc.isNonTerminal(new_item.production[new_item.dot])):
-                            apply_closure(state, new_item)
+                        p_prog = my_item.dot
+                        stopped = False
+                        while (p_prog+1 <= len(my_item.production)-1 and not stopped):
+                            if (ffc.isTerminal(my_item.production[p_prog+1])):
+                                if (my_item.production[p_prog+1] not in temp_lookAhead_l):
+                                    temp_lookAhead_l.append(my_item.production[p_prog+1])
+                                    stopped = True
+                            else:
+                                for nT in non_terminals:
+                                    if (nT.name == my_item.production[p_prog+1]):
+                                        for first_nT in nT.first_l:
+                                            if (first_nT != "#"):
+                                                if (first_nT not in temp_lookAhead_l):
+                                                    temp_lookAhead_l.append(first_nT)
+                                            else:
+                                                if (p_prog+1 == len(my_item.production)-1):
+                                                    for item_clos_rec_eq in my_item.set_of_rec_equations:
+                                                        if (item_clos_rec_eq not in temp_lookAhead_l):
+                                                            temp_lookAhead_l.append(item_clos_rec_eq)
+                            p_prog += 1
+                    temp_type = ""
+                    if (production[0][3] == "#"):
+                        new_temp_item = create_new_lr0_item(production[0], 3, "Closure", "Reduce")
+                        temp_type = "Reduce"
+                    else:
+                        new_temp_item = create_new_lr0_item(production[0], 3, "Closure", "Not-Reduce")
+                        temp_type = "Not-Reduce"
+                    found = False
+                    for item_for_la_merge in state.item_l:
+                        tmp_item = create_new_lr0_item(item_for_la_merge.production, item_for_la_merge.dot, item_for_la_merge.type, item_for_la_merge.isReduceItem)
+                        if (tmp_item == new_temp_item):
+                            for la_to_merge in temp_lookAhead_l:
+                                if (la_to_merge not in item_for_la_merge.set_of_rec_equations[0].symbol_list):
+                                    item_for_la_merge.set_of_rec_equations[0].symbol_list.append(la_to_merge)
+                            found = True
+                    if (not found):
+                        new_item = create_new_lr0_item(production[0], 3, "Closure", temp_type)
+                        new_item_rec_eq = create_new_rec_equation(rec_equations_counter)
+                        for symb_to_add in temp_lookAhead_l:
+                            if (symb_to_add not in new_item_rec_eq.symbol_list):
+                                new_item_rec_eq.symbol_list.append(symb_to_add)
+                        add_rec_equation(new_temp_item, new_item_rec_eq)
+                        if (new_item not in state.item_l):
+                            state.item_l.append(new_item)
+                            #print("Adding " + new_item.production + " to state " + str(state.name))
+                            if (recursion < 2):
+                                if (ffc.isNonTerminal(new_item.production[new_item.dot])):
+                                    #print("recurring for " + new_item.production, recursion)
+                                    apply_closure(state, new_item, recursion+1, rec_equations_counter)
 #------------------------------------------------------------------------------
 class transition:
     name = 0
@@ -210,7 +259,7 @@ transitions = []                                        # array of transitions b
 state_counter = 0
 transition_counter = 0
 rec_equations_counter = 0
-rec_eq_name = "x"+str(rec_equations_counter)
+
 
 # input section
 with open("utils/grammar.txt", 'r', encoding = 'ISO-8859-1') as f:
@@ -283,20 +332,17 @@ print("-------------------- LR(0)-automaton Computation ---------------------")
 initial_state = create_new_state(state_counter)
 state_counter += 1
 initial_state.isInitialState = True
-s_item = create_new_lr0_item(a_grammar[0], "Kernel", 3, "Not-Reduce")
-initial_lookahead = create_new_rec_equation(rec_eq_name)
-rec_equations_counter += 1
+s_item = create_new_lr0_item(a_grammar[0], 3, "Kernel", "Not-Reduce")
+initial_lookahead = create_new_rec_equation(rec_equations_counter)
 initial_lookahead.symbol_list.append("$")
-
+add_rec_equation(s_item, initial_lookahead)
 
 ######## solution for solving recursive equations #########
-another_rec_eq_1 = create_new_rec_equation(rec_eq_name)
-rec_equations_counter += 1
+another_rec_eq_1 = create_new_rec_equation(rec_equations_counter)
 another_rec_eq_1.symbol_list.append("$")
 temp_list = ["a", "b"]
 print(another_rec_eq_1, another_rec_eq_1.symbol_list)
-another_rec_eq_2 = create_new_rec_equation(rec_eq_name)
-rec_equations_counter += 1
+another_rec_eq_2 = create_new_rec_equation(rec_equations_counter)
 for elem in temp_list:
     another_rec_eq_2.symbol_list.append(elem)
 another_rec_eq_1.symbol_list.append(another_rec_eq_2)
@@ -312,16 +358,15 @@ for element in another_rec_eq_1.symbol_list:
 print(another_rec_eq_1, another_rec_eq_1.symbol_list, "\n")
 #############################################################
 
-add_rec_equation(s_item, initial_lookahead)
 initial_state.add_item(s_item)
-apply_closure(initial_state, s_item)
+apply_closure(initial_state, s_item, 0, rec_equations_counter)
 lr0_states.append(initial_state)
 
 # rest of automaton computation
 for state in lr0_states:
     for i in range(3): # temporary solution to recursive closure applications
         for clos_item in state.item_l:
-            apply_closure(state, clos_item)
+            apply_closure(state, clos_item, 0, rec_equations_counter)
     new_symb_transitions = []
     for item in state.item_l:
         if (item.isReduceItem == "Not-Reduce"):
@@ -351,7 +396,7 @@ for state in lr0_states:
             for new_state_item in new_state_items:
                 if (new_state_item not in new_state.item_l):
                     new_state.add_item(new_state_item)
-                apply_closure(new_state, new_state_item)
+                apply_closure(new_state, new_state_item, 0, rec_equations_counter)
             new_transition = create_new_transition(transition_counter, element, state.name, new_state.name)
             transition_counter += 1
             if (new_transition not in transitions):
