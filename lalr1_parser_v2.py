@@ -37,10 +37,12 @@ class nonTerminal:
 class recursiveEquation:
     name = ""
     symbol_list = []
+    solved = False
 
     def __init__ (self, name):
         self.name = name
         self.symbol_list = []
+        self.solved = False
 
     def __str__ (self):
         return str(self.name)
@@ -381,6 +383,7 @@ for state in lr0_states:
             if (item.isReduceItem != "Reduce"):
                 if (item.production[item.dot] == element):
                     new_item = create_new_lr0_item(item.production, item.dot+1, "Kernel", "Reduce" if (item.dot+1 == len(item.production)) else "Not-Reduce")
+                    add_rec_equation(new_item, item.set_of_rec_equations[0])
                     new_state_items.append(new_item)
         for state_n in lr0_states:
                 if (check_kernel_equality(new_state_items, state_n)):
@@ -413,15 +416,22 @@ for rec_eq in rec_equations:
     print(rec_eq.name)
     print(rec_eq.symbol_list)
 
-for state in lr0_states:
-    for item in state.item_l:
-        for rec_eq in item.set_of_rec_equations:
-            for element in rec_eq.symbol_list:
-                if (not isinstance(element, str)):
-                    rec_eq.symbol_list.remove(element)
-                    for symbol in element.symbol_list:
-                        if (symbol not in rec_eq.symbol_list):
-                            rec_eq.symbol_list.append(symbol)
+finished_solving = False
+while (not finished_solving):
+    for state in lr0_states:
+        for item in state.item_l:
+            for rec_eq in item.set_of_rec_equations:
+                for element in rec_eq.symbol_list:
+                    if (not isinstance(element, str)):
+                        rec_eq.symbol_list.remove(element)
+                        for symbol in element.symbol_list:
+                            if (symbol not in rec_eq.symbol_list):
+                                rec_eq.symbol_list.append(symbol)
+                rec_eq.solved = True
+    for state in lr0_states:
+        for item in state.item_l:
+            if (all(rec_eq.solved for rec_eq in item.set_of_rec_equations)):
+                finished_solving = True
 
 print("\n")
 for rec_eq in rec_equations:
@@ -432,7 +442,7 @@ print("LALR(1)-states:")
 for state in lr0_states:
     print("\nState " + str(state.name) + ":")
     for element in state.item_l:
-        print(element.production + ",", element.type + ", Dot is on " + str(element.dot) + ", " + element.isReduceItem, element.set_of_rec_equations)
+        print(element.production + ", Dot is on " + str(element.dot) + ", " + element.type + ", " + element.isReduceItem + ",", element.set_of_rec_equations[0].symbol_list)
 print("\nLALR(1)-transitions:")
 for transition in transitions:
     print(transition.name, transition.element, transition.starting_state, transition.ending_state)
