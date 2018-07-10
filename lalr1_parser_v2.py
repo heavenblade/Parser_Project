@@ -42,22 +42,16 @@ class recursiveEquation:
         self.name = name
         self.symbol_list = []
 
-    # def __eq__ (self, other):
-
-    def __hash__ (self):
-        return hash((self.name, self.symbol_list))
-
     def __str__ (self):
         return str(self.name)
 
 def create_new_rec_equation (rec_equations_counter):
     rec_eq_name = "x"+str(rec_equations_counter)
     new_equation = recursiveEquation(rec_eq_name)
-    rec_equations_counter += 1
     return new_equation
 
 def add_symbol (self, element):
-        self.symbol_list.append(element)
+    self.symbol_list.append(element)
 #------------------------------------------------------------------------------
 class lr0Item:
     production = []
@@ -142,9 +136,6 @@ def create_new_lr1_item (production, dot, type, reduct):
 
 def set_lookaheads (item, lookahead_l):
     item.lookAhead = lookahead_l
-
-def print_item (item):
-    print(item.production, item.lookAhead, item.dot, item.type, item.isReduceItem)
 #------------------------------------------------------------------------------
 class lr0State:
     name = 0
@@ -222,10 +213,17 @@ def apply_closure (state, my_item, recursion, rec_equations_counter):
                     if (not found):
                         new_item = create_new_lr0_item(production[0], 3, "Closure", temp_type)
                         new_item_rec_eq = create_new_rec_equation(rec_equations_counter)
+                        rec_equations_counter += 1
                         for symb_to_add in temp_lookAhead_l:
                             if (symb_to_add not in new_item_rec_eq.symbol_list):
                                 new_item_rec_eq.symbol_list.append(symb_to_add)
-                        add_rec_equation(new_temp_item, new_item_rec_eq)
+                        add_rec_equation(new_item, new_item_rec_eq)
+                        rec_eq_already_in_array = False
+                        for rec_eq in rec_equations:
+                            if (rec_eq.name == new_item_rec_eq.name):
+                                rec_eq_already_in_array = True
+                        if (not rec_eq_already_in_array):
+                            rec_equations.append(new_item_rec_eq)
                         if (new_item not in state.item_l):
                             state.item_l.append(new_item)
                             #print("Adding " + new_item.production + " to state " + str(state.name))
@@ -256,6 +254,7 @@ non_terminal_names = []                                 # just strings
 non_terminals = []                                      # actual non-terminals
 lr0_states = []                                         # array of LR(0)-states
 transitions = []                                        # array of transitions between LR(0)-states
+rec_equations = []
 state_counter = 0
 transition_counter = 0
 rec_equations_counter = 0
@@ -334,9 +333,14 @@ state_counter += 1
 initial_state.isInitialState = True
 s_item = create_new_lr0_item(a_grammar[0], 3, "Kernel", "Not-Reduce")
 initial_lookahead = create_new_rec_equation(rec_equations_counter)
+rec_equations_counter += 1
 initial_lookahead.symbol_list.append("$")
 add_rec_equation(s_item, initial_lookahead)
-
+rec_equations.append(initial_lookahead)
+initial_state.add_item(s_item)
+apply_closure(initial_state, s_item, 0, rec_equations_counter)
+lr0_states.append(initial_state)
+'''
 ######## solution for solving recursive equations #########
 another_rec_eq_1 = create_new_rec_equation(rec_equations_counter)
 another_rec_eq_1.symbol_list.append("$")
@@ -357,11 +361,7 @@ for element in another_rec_eq_1.symbol_list:
 
 print(another_rec_eq_1, another_rec_eq_1.symbol_list, "\n")
 #############################################################
-
-initial_state.add_item(s_item)
-apply_closure(initial_state, s_item, 0, rec_equations_counter)
-lr0_states.append(initial_state)
-
+'''
 # rest of automaton computation
 for state in lr0_states:
     for i in range(3): # temporary solution to recursive closure applications
@@ -380,7 +380,7 @@ for state in lr0_states:
         for item in state.item_l:
             if (item.isReduceItem != "Reduce"):
                 if (item.production[item.dot] == element):
-                    new_item = create_new_lr0_item(item.production, "Kernel", item.dot+1, "Reduce" if (item.dot+1 == len(item.production)) else "Not-Reduce")
+                    new_item = create_new_lr0_item(item.production, item.dot+1, "Kernel", "Reduce" if (item.dot+1 == len(item.production)) else "Not-Reduce")
                     new_state_items.append(new_item)
         for state_n in lr0_states:
                 if (check_kernel_equality(new_state_items, state_n)):
@@ -407,6 +407,27 @@ for state in lr0_states:
             if (new_transition not in transitions):
                 transitions.append(new_transition)
 
+print(rec_equations)
+print("\n")
+for rec_eq in rec_equations:
+    print(rec_eq.name)
+    print(rec_eq.symbol_list)
+
+for state in lr0_states:
+    for item in state.item_l:
+        for rec_eq in item.set_of_rec_equations:
+            for element in rec_eq.symbol_list:
+                if (not isinstance(element, str)):
+                    rec_eq.symbol_list.remove(element)
+                    for symbol in element.symbol_list:
+                        if (symbol not in rec_eq.symbol_list):
+                            rec_eq.symbol_list.append(symbol)
+
+print("\n")
+for rec_eq in rec_equations:
+    print(rec_eq.name)
+    print(rec_eq.symbol_list)
+
 print("LALR(1)-states:")
 for state in lr0_states:
     print("\nState " + str(state.name) + ":")
@@ -414,7 +435,7 @@ for state in lr0_states:
         print(element.production + ",", element.type + ", Dot is on " + str(element.dot) + ", " + element.isReduceItem, element.set_of_rec_equations)
 print("\nLALR(1)-transitions:")
 for transition in transitions:
-    print(transition.name,  transition.element, transition.starting_state, transition.ending_state)
+    print(transition.name, transition.element, transition.starting_state, transition.ending_state)
 
 # table creation
 header = []
