@@ -220,6 +220,7 @@ def apply_closure (state, my_item, recursion, rec_equations_counter):
                             if (symb_to_add not in new_item_rec_eq.symbol_list):
                                 new_item_rec_eq.symbol_list.append(symb_to_add)
                         add_rec_equation(new_item, new_item_rec_eq)
+                        rec_equations.append(new_item_rec_eq)
                         rec_eq_already_in_array = False
                         for rec_eq in rec_equations:
                             if (rec_eq.name == new_item_rec_eq.name):
@@ -415,28 +416,32 @@ print("\n")
 for rec_eq in rec_equations:
     print(rec_eq.name)
     print(rec_eq.symbol_list)
+    print(rec_eq.solved)
 
 finished_solving = False
+i = 0
 while (not finished_solving):
-    for state in lr0_states:
-        for item in state.item_l:
-            for rec_eq in item.set_of_rec_equations:
-                for element in rec_eq.symbol_list:
-                    if (not isinstance(element, str)):
-                        rec_eq.symbol_list.remove(element)
-                        for symbol in element.symbol_list:
-                            if (symbol not in rec_eq.symbol_list):
-                                rec_eq.symbol_list.append(symbol)
+    print(i)
+    for rec_eq in rec_equations:
+        for element in rec_eq.symbol_list:
+            if (not isinstance(element, str)):
+                rec_eq.symbol_list.remove(element)
+                #print("Removing " + element.name + " from " + rec_eq.name + " and adding ", element.symbol_list)
+                for symbol in element.symbol_list:
+                    if (symbol not in rec_eq.symbol_list):
+                        rec_eq.symbol_list.append(symbol)
+            else:
                 rec_eq.solved = True
-    for state in lr0_states:
-        for item in state.item_l:
-            if (all(rec_eq.solved for rec_eq in item.set_of_rec_equations)):
-                finished_solving = True
-
+    if (all(rec_eq.solved for rec_eq in rec_equations)):
+        finished_solving = True
+    else:
+        finished_solving = False
+    i += 1
 print("\n")
 for rec_eq in rec_equations:
     print(rec_eq.name)
     print(rec_eq.symbol_list)
+    print(rec_eq.solved)
 
 print("LALR(1)-states:")
 for state in lr0_states:
