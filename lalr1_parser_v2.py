@@ -379,6 +379,15 @@ for state in lr0_states:
             if (new_transition not in transitions):
                 transitions.append(new_transition)
 
+"""
+A->AB
+A->C
+A->#
+B->bB
+B->C
+B->#
+C->c
+"""
 
 print(rec_equations)
 print("\n")
@@ -413,7 +422,28 @@ print("\nLALR(1)-states:")
 for state in lr0_states:
     print("\nState " + str(state.name) + ":")
     for element in state.item_l:
-        print(element.production + ", Dot is on " + str(element.dot) + ", " + element.type + ", " + element.isReduceItem + ",", element.set_of_rec_equations[0].symbol_list)
+        prod_to_print = ""
+        prod_to_print += element.production[:3]
+        if (element.isReduceItem == "Reduce"):
+            if (element.production[3] == "#"):
+                prod_to_print += "."
+            else:
+                prod_to_print += element.production[3:]
+                prod_to_print += "."
+        else:
+            idx = 3
+            dot_added = False
+            while (idx < len(element.production)):
+                if (idx != element.dot):
+                    prod_to_print += element.production[idx]
+                    idx += 1
+                elif (idx == element.dot and not dot_added):
+                    prod_to_print += "."
+                    prod_to_print += element.production[idx]
+                    dot_added = True
+                else:
+                    idx += 1
+        print(prod_to_print + ", " + element.type + ", " + element.isReduceItem + ",", element.set_of_rec_equations[0].symbol_list)
 print("\nLALR(1)-transitions:")
 for transition in transitions:
     print(transition.name, transition.element, transition.starting_state, transition.ending_state)
@@ -428,12 +458,12 @@ for element in non_terminal_names:
         header.append(element)
 
 lr0_table = PrettyTable(header)
-total_lenght = len(non_terminal_names) + len(terminal_names)
-table = [["" for x in range(total_lenght)] for y in range(state_counter)]
+total_length = len(non_terminal_names) + len(terminal_names)
+table = [["" for x in range(total_length)] for y in range(state_counter)]
 
 # LALR(1)-parsing table computation
 for idx_row in range(state_counter):
-    for idx_col in range(total_lenght):
+    for idx_col in range(total_length):
         if (idx_col == 0):
             table[idx_row][idx_col] = idx_row
         else:
@@ -473,7 +503,7 @@ for i in range(state_counter):
 print("\nLALR(1) parsing table of the grammar G:")
 print(lr0_table)
 
-if (ffc.verify_grammar(table, state_counter, total_lenght)):
+if (ffc.verify_grammar(table, state_counter, total_length)):
     print("\nThe grammar G is not LALR(1).")
 else:
     print("\nThe grammar G is LALR(1).")

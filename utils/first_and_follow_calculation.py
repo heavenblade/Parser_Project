@@ -7,6 +7,9 @@
 #
 # Author: Matteo Amatori
 
+# global variables declaration
+rec_equations_counter = 0                               # counter of recursive equations of lookahead symbols (this is here because i suck and can't figure out how to fit it into the lalr script)
+
 # functions declaration
 def isTerminal(element):
     isSymbol = False

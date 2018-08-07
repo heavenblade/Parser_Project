@@ -471,7 +471,28 @@ print("LALR(1)-states:")
 for state in lalr1_states:
     print("\nState " + str(state.name) + ":")
     for element in state.item_l:
-        print(element.production + ",", element.lookAhead, ", Dot is on " + str(element.dot) + ", " + element.type + ", " + element.isReduceItem)
+        prod_to_print = ""
+        prod_to_print += element.production[:3]
+        if (element.isReduceItem == "Reduce"):
+            if (element.production[3] == "#"):
+                prod_to_print += "."
+            else:
+                prod_to_print += element.production[3:]
+                prod_to_print += "."
+        else:
+            idx = 3
+            dot_added = False
+            while (idx < len(element.production)):
+                if (idx != element.dot):
+                    prod_to_print += element.production[idx]
+                    idx += 1
+                elif (idx == element.dot and not dot_added):
+                    prod_to_print += "."
+                    prod_to_print += element.production[idx]
+                    dot_added = True
+                else:
+                    idx += 1
+        print(prod_to_print + ", " + element.type + ", " + element.isReduceItem + ",", element.lookAhead)
 print("\nLALR(1)-transitions:")
 for transition in lalr1_transitions:
     print(transition.name,  transition.element, transition.starting_state, transition.ending_state)
