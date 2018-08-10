@@ -210,7 +210,6 @@ def apply_closure (state, my_item, recursion):
                     if (not found):
                         new_item = create_new_lr0_item(production[0], 3, "Closure", temp_type)
                         new_item_rec_eq = create_new_rec_equation()
-                        #rec_equations_counter += 1
                         for symb_to_add in temp_lookAhead_l:
                             if (symb_to_add not in new_item_rec_eq.symbol_list):
                                 new_item_rec_eq.symbol_list.append(symb_to_add)
@@ -249,7 +248,6 @@ transitions = []                                        # array of transitions b
 rec_equations = []                                      # array of recursive equations of lookahead symbols
 state_counter = 0                                       # counter of LR(0)-states
 transition_counter = 0                                  # counter of transitions between LR(0)-states
-#rec_equations_counter = 0                               # counter of recursive equations of lookahead symbols
 
 # input section
 with open("utils/grammar.txt", 'r', encoding = 'ISO-8859-1') as f:
@@ -324,7 +322,6 @@ state_counter += 1
 initial_state.isInitialState = True
 s_item = create_new_lr0_item(a_grammar[0], 3, "Kernel", "Not-Reduce")
 initial_lookahead = create_new_rec_equation()
-#rec_equations_counter += 1
 initial_lookahead.symbol_list.append("$")
 add_rec_equation(s_item, initial_lookahead)
 rec_equations.append(initial_lookahead)
@@ -378,45 +375,47 @@ for state in lr0_states:
             transition_counter += 1
             if (new_transition not in transitions):
                 transitions.append(new_transition)
-
+            for arrival_state in lr0_states:
+                if (arrival_state.name == destination_state):
+                    for item_dep_state in state.item_l:
+                        for item_arr_state in arrival_state.item_l:
+                            if (item_dep_state == item_arr_state):
+                                for rec_eq_dep_item in item_dep_state.set_of_rec_equations:
+                                    if (rec_eq_dep_item not in item_arr_state.set_of_rec_equations):
+                                        item_arr_state.set_of_rec_equations.append(rec_eq_dep)
+                                        #print("Adding " + rec_eq_dep_item + " from " + item_dep_state.production + " to " + item_arr_state.production)
 """
-A->AB
-A->C
-A->#
-B->bB
-B->C
-B->#
-C->c
-"""
-
 print(rec_equations)
 print("\n")
 for rec_eq in rec_equations:
     print(rec_eq.name + " =", rec_eq.symbol_list)
-
+"""
 # recursive equations solving
 finished_solving = False
 while (not finished_solving):
     for rec_eq in rec_equations:
-        for element in rec_eq.symbol_list:
-            if (not isinstance(element, str)):
-                rec_eq.symbol_list.remove(element)
-                print("Removing " + element.name + " from " + rec_eq.name + " and adding ", element.symbol_list)
-                for symbol in element.symbol_list:
-                    if (symbol not in rec_eq.symbol_list):
-                        rec_eq.symbol_list.append(symbol)
-        if all(not isinstance(elem, str) for elem in rec_eq.symbol_list):
-            rec_eq.solved = False
-        else:
-            rec_eq.solved = True
+        while(not rec_eq.solved):
+            for element in rec_eq.symbol_list:
+                if (not isinstance(element, str)):
+                    rec_eq.symbol_list.remove(element)
+                    #print("Removing " + element.name + " from " + rec_eq.name + " and adding ", element.symbol_list)
+                    for symbol in element.symbol_list:
+                        if (symbol not in rec_eq.symbol_list):
+                            rec_eq.symbol_list.append(symbol)
+            if not all(isinstance(elem, str) for elem in rec_eq.symbol_list):
+                rec_eq.solved = False
+            else:
+                rec_eq.solved = True
+                #print("Solved: " + rec_eq.name + " =", rec_eq.symbol_list, "")
     if (all(rec_eq.solved for rec_eq in rec_equations)):
         finished_solving = True
     else:
         finished_solving = False
+"""
 print("\n")
 for rec_eq in rec_equations:
     print(rec_eq.name + " =", rec_eq.symbol_list)
-
+"""
 # states and transitions output
 print("\nLALR(1)-states:")
 for state in lr0_states:
@@ -493,9 +492,10 @@ for state in lr0_states:
                     if (item.production == production[0]):
                         new_entry = "R" + str(idx1+1)
                 for idx2, element in enumerate(header):
-                    if (ffc.isTerminal(element) or element == "$"):
-                        if (len(new_entry) > 0):
-                            table[state.name][idx2].append(new_entry)
+                    for rec_eq_symbol in item.set_of_rec_equations[0].symbol_list:
+                        if (element == rec_eq_symbol):
+                            if (len(new_entry) > 0):
+                                table[state.name][idx2].append(new_entry)
 
 for i in range(state_counter):
     lr0_table.add_row(table[i])
