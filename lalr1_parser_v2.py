@@ -382,7 +382,7 @@ for state in lr0_states:
                             if (item_dep_state == item_arr_state):
                                 for rec_eq_dep_item in item_dep_state.set_of_rec_equations:
                                     if (rec_eq_dep_item not in item_arr_state.set_of_rec_equations):
-                                        item_arr_state.set_of_rec_equations.append(rec_eq_dep)
+                                        item_arr_state.set_of_rec_equations.append(rec_eq_dep_item)
                                         #print("Adding " + rec_eq_dep_item + " from " + item_dep_state.production + " to " + item_arr_state.production)
 """
 print(rec_equations)
